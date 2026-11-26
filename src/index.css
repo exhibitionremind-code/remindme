@@ -3456,9 +3456,11 @@ body {
   display: contents;
 }
 
-@media (max-width: 767px) {
+@media all {
   .auth-page {
     width: 100%;
+    max-width: 500px;
+    margin-inline: auto;
     min-height: max(100dvh, 680px);
     height: 100dvh;
     font-family: "Poppins", sans-serif;

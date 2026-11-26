@@ -595,17 +595,31 @@ function Auth({ screen, setScreen, enter }) {
               </div>
               <div className="social">
                 <button
-                  onClick={() =>
-                    hasSupabase ? signInOAuth("facebook") : enter()
-                  }
+                  onClick={async () => {
+                    if (!hasSupabase) return enter();
+                    try {
+                      await signInOAuth("facebook");
+                    } catch (error) {
+                      setMessage(
+                        "Login Facebook belum diaktifkan. Hubungi admin.",
+                      );
+                    }
+                  }}
                   aria-label="Login dengan Facebook"
                 >
                   <img src="/assets/pic/pic-0.png" alt="" />
                 </button>
                 <button
-                  onClick={() =>
-                    hasSupabase ? signInOAuth("google") : enter()
-                  }
+                  onClick={async () => {
+                    if (!hasSupabase) return enter();
+                    try {
+                      await signInOAuth("google");
+                    } catch (error) {
+                      setMessage(
+                        "Login Google belum diaktifkan. Hubungi admin.",
+                      );
+                    }
+                  }}
                   aria-label="Login dengan Google"
                 >
                   <img src="/assets/pic/pic-1.png" alt="" />
