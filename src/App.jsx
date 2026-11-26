@@ -379,7 +379,7 @@ function App() {
   if (!authReady)
     return (
       <main className="app-loading">
-        <img src="/assets/remind-logo-full.png" alt="ReMind" />
+        <img src="/assets/pic/pic-2.png" alt="ReMind" />
         <span>Memuat ruangmu…</span>
       </main>
     );
@@ -425,7 +425,7 @@ function Onboarding({ next }) {
         <p className="onboarding-subhello">Welcome to</p>
         <img
           className="onboarding-logo"
-          src="/assets/remind-logo-full.png"
+          src="/assets/pic/pic-2.png"
           alt="ReMind"
         />
         <p className="onboarding-tagline">Rest Your Mind, Reset Your Day.</p>
@@ -524,7 +524,7 @@ function Auth({ screen, setScreen, enter }) {
             <Icon icon={faArrowLeft} />
             {screen === "signup" && <span>Back to login</span>}
           </button>
-          <BrainMascot small />
+          <BrainMascot small flex={screen === "signup"} />
           <h1>{screen === "login" ? "Login" : "Create Your Account"}</h1>
           <p>{screen === "login" ? "" : "Lengkapi data untuk memulai"}</p>
           <form onSubmit={submitAuth}>
@@ -687,7 +687,12 @@ function Field({ label, icon, ...props }) {
     </label>
   );
 }
-function BrainMascot({ small = false }) {
+function BrainMascot({ small = false, flex = false }) {
+  const src = flex ? "/assets/pic/pic-58.png" : "/assets/pic/pic-57.png";
+  const cls = `brain brain-img${small ? " small" : ""}${flex ? " flex" : ""}`;
+  return <img className={cls} src={src} alt="" aria-hidden="true" />;
+}
+function _OldBrainMascot({ small = false }) {
   return (
     <div className={"brain " + (small ? "small" : "")} aria-hidden="true">
       <img src="/assets/brain-welcome.png" width="571" height="588" alt="" />
@@ -751,13 +756,13 @@ function Home({ go, user }) {
       <section className="home-hero">
         <div className="home-topbar">
           <img
-            src="/assets/remind-logo-full.png"
+            src="/assets/pic/pic-2.png"
             width="1004"
             height="1004"
             alt="ReMind"
           />
           <button onClick={() => go("sos")} aria-label="Buka SOS">
-            <img src="/assets/sos-badge.png" alt="" />
+            <img src="/assets/pic/pic-6.png" alt="" />
           </button>
         </div>
         <div className="hello">
@@ -766,7 +771,7 @@ function Home({ go, user }) {
         </div>
         <img
           className="home-mascot"
-          src="/assets/home-mascot-mushroom.png"
+          src="/assets/pic/pic-5.png"
           width="86"
           height="77"
           alt=""
@@ -809,25 +814,25 @@ function Home({ go, user }) {
         <h2>Your Wellness</h2>
         <div className="wellness-grid">
           <Feature
-            image="/assets/wellness-pomodoro.png"
+            image="/assets/pic/pic-11.png"
             title="Pomodoro"
             text="Belajar & Istirahat"
             onClick={() => go("pomodoro")}
           />
           <Feature
-            image="/assets/wellness-grounding.png"
+            image="/assets/pic/pic-12.png"
             title="Grounding"
             text="Tenangkan Diri"
             onClick={() => go("sos")}
           />
           <Feature
-            image="/assets/wellness-mental.png"
+            image="/assets/pic/pic-13.png"
             title="Mental Health"
             text="Edukasi & Flashcard"
             onClick={() => go("education")}
           />
           <Feature
-            image="/assets/profile-mood-original.png"
+            image="/assets/pic/pic-16.png"
             title="Mood Playlist"
             text="Musik Sesuai Suasana"
             onClick={() => go("playlist")}
@@ -897,7 +902,7 @@ function Tasks({ tasks, setTasks, flash, go }) {
           </button>
         </header>
         <div className="task-detail-greeting">
-          <img src="/assets/mascot-task-sparkle.png" alt="" />
+          <img src="/assets/pic/pic-17.png" alt="" />
           <p>Hai, Ramadhani<br />Septhea Dwi Putri<br /><b>“Yuk, selesaikan tugasmu satu per satu!”</b></p>
         </div>
         <span className={`detail-priority ${selected.priority.toLowerCase()}`}>{selected.priority}</span>
@@ -916,7 +921,7 @@ function Tasks({ tasks, setTasks, flash, go }) {
   if (tasks.length > 0 && tasks.every((task) => task.done))
     return (
       <section className="tasks-complete-page">
-        <img src="/assets/mascot-hug-heart.png" alt="" />
+        <img src="/assets/pic/pic-31.png" alt="" />
         <h1>Semua tugas selesai!</h1>
         <p>Kamu sudah melakukan yang terbaik hari ini</p>
         <blockquote>Jangan lupa istirahat ya,<br />kamu juga perlu waktu buat diri sendiri</blockquote>
@@ -971,7 +976,7 @@ function Tasks({ tasks, setTasks, flash, go }) {
             <Icon icon={faMusic} />
           </button>
         </div>
-        <img src="/assets/mascot-task-sparkle.png" alt="" width="86" height="77" />
+        <img src="/assets/pic/pic-17.png" alt="" width="86" height="77" />
         <div>
           <h1>
             Hai, Ramadhani
@@ -1349,7 +1354,7 @@ function Mood({ go, persist }) {
           <Icon icon={faArrowLeft} /> Hasil mood tracker
         </button>
         <div className="mood-result-brand">
-          <img src="/assets/mascot-heart-original.png" alt="" />
+          <img src="/assets/pic/pic-31.png" alt="" />
           <b>
             Mood
             <br />
@@ -1386,7 +1391,7 @@ function Mood({ go, persist }) {
       <button className="page-back" onClick={() => go("home")}>
         <Icon icon={faArrowLeft} /> Mood Tracker
       </button>
-      <img className="mood-mascot" src="/assets/mascot-love-original.png" alt="" />
+      <img className="mood-mascot" src="/assets/pic/pic-26.png" alt="" />
       <p className="mood-greeting">
         Hai, Ramadhani
         <br />
@@ -1492,7 +1497,7 @@ function Screening({ go, persist }) {
         <button className="page-back" onClick={() => go("mood")}>
           <Icon icon={faArrowLeft} /> Skrining stress
         </button>
-        <img className="screening-mascot" src="/assets/mascot-screening.png" alt="" />
+        <img className="screening-mascot" src="/assets/pic/pic-30.png" alt="" />
         <p className="screening-greeting">
           Hai, Ramadhani
           <br />
@@ -1526,7 +1531,7 @@ function Screening({ go, persist }) {
         <button className="page-back" onClick={() => go("mood")}>
           <Icon icon={faArrowLeft} /> Hasil skrining
         </button>
-        <img className="screening-mascot" src="/assets/mascot-screening.png" alt="" />
+        <img className="screening-mascot" src="/assets/pic/pic-30.png" alt="" />
         <h1>Hasil skrining</h1>
         <div className="result-scores">
           <article>
@@ -1569,7 +1574,7 @@ function Screening({ go, persist }) {
           <i style={{ width: `${(step + 1) * 25}%` }} />
         </span>
       </div>
-      <img className="screening-mascot" src="/assets/mascot-screening.png" alt="" />
+      <img className="screening-mascot" src="/assets/pic/pic-30.png" alt="" />
       <article className="screening-question-card">
         <p>
           Selama 2 minggu terakhir, seberapa sering kamu mengalami masalah
@@ -1639,7 +1644,7 @@ function SOS({ go }) {
           <br />
           agar pikiran juga ikut tenang
         </p>
-        <img src="/assets/mascot-breathing.png" alt="" />
+        <img src="/assets/pic/pic-42.png" alt="" />
         <article>
           <h2>pernapasan 4-7-8</h2>
           <p>Teknik sederhana untuk menenangkan pikiran dan tubuh</p>
@@ -1664,7 +1669,7 @@ function SOS({ go }) {
     return (
       <section className="sos-page emotional-page">
         {top("Dukungan Emosional")}
-        <img src="/assets/mascot-heart-original.png" alt="" />
+        <img src="/assets/pic/pic-31.png" alt="" />
         <h2>
           Kamu tidak sendirian,
           <br />
@@ -1788,12 +1793,12 @@ function SOS({ go }) {
         </article>
         <div className="sos-service-row">
           <a href="tel:+6282281235569">
-            <Icon icon={faPhone} />
+            <img className="sos-service-icon" src="/assets/pic/pic-37.png" alt="" />
             <b>Tim medis</b>
             <small>+6282281235569</small>
           </a>
           <button onClick={() => setStage("contacts")}>
-            <Icon icon={faUser} />
+            <img className="sos-service-icon" src="/assets/pic/pic-36.png" alt="" />
             <b>
               Orang
               <br />
@@ -1801,7 +1806,7 @@ function SOS({ go }) {
             </b>
           </button>
           <a href="tel:119">
-            <Icon icon={faHeartPulse} />
+            <img className="sos-service-icon" src="/assets/pic/pic-66.png" alt="" />
             <b>Ambulans</b>
             <small>119</small>
           </a>
@@ -1824,7 +1829,7 @@ function SOS({ go }) {
       className={`sos-page ${choice ? "sos-choice-page" : "sos-home-page"}`}
     >
       {top()}
-      <img className="sos-mascot" src="/assets/mascot-heart-original.png" alt="" />
+      <img className="sos-mascot" src="/assets/pic/pic-31.png" alt="" />
       {choice ? (
         <>
           <h2>
@@ -1842,30 +1847,30 @@ function SOS({ go }) {
               [
                 "Darurat Medis",
                 "Butuh bantuan medis segera (ambulans, rumah sakit, dll)",
-                faHeartPulse,
+                "/assets/pic/pic-33.png",
                 "sent",
               ],
               [
                 "Butuh Dukungan Emosional",
                 "Kamu merasa cemas, sedih, atau ingin bercerita",
-                faBrain,
+                "/assets/pic/pic-63.png",
                 "emotional",
               ],
               [
                 "Hubungi Kontak Darurat",
                 "Orang terdekat yang sudah ditambahkan",
-                faUser,
+                "/assets/pic/pic-64.png",
                 "contacts",
               ],
               [
                 "Lainnya",
                 "Kekerasan, kecelakaan, atau keadaan darurat lainnya",
-                faTriangleExclamation,
+                "/assets/pic/pic-65.png",
                 "sent",
               ],
-            ].map(([name, text, icon, next]) => (
+            ].map(([name, text, img, next]) => (
               <button key={name} onClick={() => setStage(next)}>
-                <Icon icon={icon} />
+                <img className="sos-option-icon" src={img} alt="" />
                 <span>
                   <b>{name}</b>
                   <small>{text}</small>
@@ -1889,8 +1894,8 @@ function SOS({ go }) {
             <br />
             membutuhkan pertolongan.
           </p>
-          <button className="sos-call" onClick={() => setStage("choice")}>
-            <Icon icon={faPhone} />
+          <button className="sos-call" onClick={() => setStage("choice")} aria-label="SOS">
+            <img src="/assets/pic/pic-23.png" alt="" />
           </button>
           <small>
             Satu sentuhan,
@@ -1920,7 +1925,7 @@ function SOS({ go }) {
       {stage === "sent" && (
         <div className="sos-overlay">
           <article>
-            <img src="/assets/mascot-emergency.png" alt="" />
+            <img src="/assets/pic/pic-34.png" alt="" />
             <h2>SOS Berhasil dikirim!</h2>
             <p>
               Tim darurat sudah menerima informasi kamu dan segera menuju ke
@@ -2042,11 +2047,13 @@ function Education({ go }) {
     const item = education[topic],
       data = item.cards[card];
     const cardArt =
-      topic === 1
-        ? "/assets/flashcard-sprout.png"
-        : topic === 3
-          ? "/assets/flashcard-cactus.png"
-          : "/assets/flashcard-plant.png";
+      topic === 0
+        ? "/assets/pic/pic-67.png"
+        : topic === 1
+          ? "/assets/pic/pic-68.png"
+          : topic === 2
+            ? "/assets/pic/pic-69.png"
+            : "/assets/pic/pic-70.png";
     return (
       <section className="education-page flashcard-page">
         <header>
@@ -2442,21 +2449,21 @@ function Profile({ user, setUser, logout, go, persist }) {
           dari dirimu sendiri!”
         </blockquote>
         <button onClick={() => go("education")}>
-          <img src="/assets/profile-learning-original.png" alt="" />
+          <img src="/assets/pic/pic-14.png" alt="" />
           <span>
             <b>Riwayat Pembelajaran</b>
             <small>Apa saja yang sudah kamu pelajari?</small>
           </span>
         </button>
         <button onClick={() => go("tasks")}>
-          <img src="/assets/profile-checklist-original.png" alt="" />
+          <img src="/assets/pic/pic-15.png" alt="" />
           <span>
             <b>Checklist Tugas</b>
             <small>Lihat tugas-tugas yang sudah kamu kerjakan</small>
           </span>
         </button>
         <button onClick={() => go("mood")}>
-          <img src="/assets/profile-mood-original.png" alt="" />
+          <img src="/assets/pic/pic-16.png" alt="" />
           <span>
             <b>Mood Tracker</b>
             <small>Bagaimana mood kamu hari ini?</small>

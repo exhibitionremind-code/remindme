@@ -2020,6 +2020,15 @@ a:focus-visible {
     serif;
   color: #608779;
 }
+.brain-img {
+  width: 110px;
+  height: auto;
+  object-fit: contain;
+  display: block;
+}
+.brain-img.small {
+  width: 84px;
+}
 .brain {
   color: #ef9cb4;
   font-size: 5rem;
@@ -2260,6 +2269,21 @@ a:focus-visible {
 .social button img {
   width: 100%;
   height: 100%;
+  object-fit: contain;
+}
+.sos-call img {
+  width: 72%;
+  height: 72%;
+  object-fit: contain;
+}
+.sos-option-icon {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+.sos-service-icon {
+  width: 46px;
+  height: 46px;
   object-fit: contain;
 }
 .auth-card > .text-button {
