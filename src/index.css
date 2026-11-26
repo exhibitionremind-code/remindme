@@ -79,7 +79,7 @@
   font-weight: 600;
 }
 
-@media (max-width: 899px) {
+@media (max-width: 767px) {
   .sos-page {
     padding: 10px 15px 75px;
   }
@@ -574,7 +574,7 @@
   }
 }
 
-@media (min-width: 900px) {
+@media (min-width: 768px) {
   .phone-canvas:has(> .home-hero) {
     min-height: 100dvh;
     padding: 44px;
@@ -1476,7 +1476,7 @@
   font-weight: 700;
 }
 
-@media (max-width: 899px) {
+@media (max-width: 767px) {
   .mood-page {
     padding: 13px 8px 78px;
     overflow: hidden;
@@ -1764,7 +1764,7 @@ a:focus-visible {
   min-height: 100dvh;
 }
 .phone-canvas {
-  width: min(100%, 500px);
+  width: 100%; max-width: 500px; margin-inline: auto;
   min-height: 100dvh;
   margin: auto;
   background: var(--cream);
@@ -1861,7 +1861,7 @@ a:focus-visible {
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: min(100%, 500px);
+  width: 100%; max-width: 500px; margin-inline: auto;
   height: 76px;
   padding: 8px 10px max(8px, env(safe-area-inset-bottom));
   background: #fff;
@@ -1892,7 +1892,7 @@ a:focus-visible {
 }
 .auth-page {
   min-height: 100dvh;
-  width: min(100%, 500px);
+  width: 100%; max-width: 500px; margin-inline: auto;
   margin: auto;
   background: linear-gradient(160deg, #f7f7ea 0 36%, #0e6b57 36% 100%);
   position: relative;
@@ -1903,7 +1903,7 @@ a:focus-visible {
 }
 .onboarding-page {
   min-height: 100dvh;
-  width: min(100%, 500px);
+  width: 100%; max-width: 500px; margin-inline: auto;
   margin: auto;
   background: linear-gradient(180deg, #d8ebd7 0%, #eaf4e4 55%, #f3f7ea 100%);
   position: relative;
@@ -3129,7 +3129,7 @@ a:focus-visible {
 .modal {
   background: var(--cream);
   border-radius: 26px 26px 0 0;
-  width: min(100%, 500px);
+  width: 100%; max-width: 500px; margin-inline: auto;
   max-height: 92dvh;
   overflow: auto;
   padding: 22px 25px 32px;
@@ -3173,7 +3173,7 @@ a:focus-visible {
 .toast svg {
   color: var(--green);
 }
-@media (min-width: 900px) {
+@media (min-width: 768px) {
   body {
     padding: 28px;
   }
@@ -3224,7 +3224,7 @@ a:focus-visible {
   text-align: center;
 }
 
-@media (max-width: 899px) {
+@media (max-width: 767px) {
   .playlist-page {
     position: relative;
     padding: 10px 19px 145px;
@@ -3456,9 +3456,9 @@ body {
   display: contents;
 }
 
-@media (max-width: 899px) {
+@media (max-width: 767px) {
   .auth-page {
-    width: min(100%, 375px);
+    width: 100%;
     min-height: max(100dvh, 680px);
     height: 100dvh;
     font-family: "Poppins", sans-serif;
@@ -3712,7 +3712,7 @@ body {
   }
   .phone-canvas,
   .bottom-nav {
-    width: min(100%, 375px);
+    width: 100%;
   }
   .phone-canvas {
     font-family: "Poppins", sans-serif;
@@ -4570,7 +4570,7 @@ body {
   }
 }
 
-@media (min-width: 900px) {
+@media (min-width: 768px) {
   body {
     padding: 0;
     background: #dfe9e2;
@@ -4843,7 +4843,7 @@ body {
   background: #cfe9d7;
 }
 
-@media (max-width: 899px) {
+@media (max-width: 767px) {
   .screening-page {
     padding: 13px 15px 78px;
   }
@@ -5099,7 +5099,7 @@ body {
   margin: 0;
 }
 
-@media (max-width: 899px) {
+@media (max-width: 767px) {
   .education-page {
     padding: 10px 18px 77px;
   }
@@ -5370,7 +5370,7 @@ body {
   }
 }
 
-@media (min-width: 900px) {
+@media (min-width: 768px) {
   .phone-canvas:has(> .home-hero) {
     min-height: 100dvh;
     padding: 44px;
