@@ -36,6 +36,9 @@ import {
   faUserLarge,
   faMobileScreen,
   faForwardStep,
+  faGear,
+  faBell,
+  faVolumeHigh,
 } from "@fortawesome/free-solid-svg-icons";
 import { faGoogle, faFacebook } from "@fortawesome/free-brands-svg-icons";
 import {
@@ -71,11 +74,11 @@ const moodOptions = [
   ["Angry", faFaceAngry, "#ef8c83"],
 ];
 const moodImages = {
-  Happy: "/assets/mood-happy-circle.png",
-  Okay: "/assets/mood-okay-circle.png",
-  Sad: "/assets/mood-sad-circle.png",
-  Stressed: "/assets/mood-stressed-circle.png",
-  Angry: "/assets/mood-angry-circle.png",
+  Happy: "/assets/pic/pic-27.png",
+  Okay: "/assets/pic/pic-27.png",
+  Sad: "/assets/pic/pic-27.png",
+  Stressed: "/assets/pic/pic-27.png",
+  Angry: "/assets/pic/pic-27.png",
 };
 const education = [
   {
@@ -211,6 +214,30 @@ const songs = [
 
 function App() {
   const [screen, setScreen] = useState(() => {
+    const preview = ["127.0.0.1", "localhost"].includes(
+      window.location.hostname,
+    )
+      ? new URLSearchParams(window.location.search).get("preview")
+      : null;
+    if (
+      [
+        "onboarding",
+        "welcome",
+        "login",
+        "signup",
+        "home",
+        "tasks",
+        "pomodoro",
+        "mood",
+        "screening",
+        "sos",
+        "playlist",
+        "education",
+        "contacts",
+        "profile",
+      ].includes(preview)
+    )
+      return preview;
     if (localStorage.getItem("remind-entered")) return "home";
     if (localStorage.getItem("remind-onboarded")) return "welcome";
     return "onboarding";
@@ -395,8 +422,11 @@ function App() {
   if (screen === "welcome" || screen === "login" || screen === "signup")
     return <Auth screen={screen} setScreen={setScreen} enter={enter} />;
   return (
-    <div className="app-shell">
-      <main id="main" className="phone-canvas">
+    <div className="min-h-[100svh] bg-[#edf4ed] md:flex">
+      <main
+        id="main"
+        className="min-h-[100svh] min-w-0 flex-1 overflow-x-hidden pb-[74px] md:pb-0"
+      >
         {content}
       </main>
       <BottomNav current={screen} go={setScreen} />
@@ -412,37 +442,70 @@ function App() {
 
 function Onboarding({ next }) {
   return (
-    <main id="main" className="onboarding-page">
+    <main
+      id="main"
+      className="relative isolate grid min-h-[100svh] w-full overflow-hidden bg-[#eef6e8] font-['Poppins'] text-[#174d3f] md:grid-cols-2"
+    >
+      <img
+        src="/assets/pic/pic-62.png"
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover opacity-30"
+      />
       <button
-        className="onboarding-back"
+        className="absolute left-7 top-8 z-20 grid size-11 cursor-pointer place-items-center rounded-full text-[25px] text-[#176b59] transition-colors hover:bg-white/50 active:bg-white/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460] md:left-10 md:top-9"
         onClick={() => next("welcome")}
         aria-label="Lewati onboarding"
       >
         <Icon icon={faArrowLeft} />
       </button>
-      <div className="onboarding-hero">
-        <p className="onboarding-hello">Hello!</p>
-        <p className="onboarding-subhello">Welcome to</p>
+      <section className="flex min-h-[505px] flex-col items-center px-6 pt-[108px] text-center md:min-h-screen md:justify-center md:pt-0">
+        <p className="m-0 text-[44px] font-bold leading-none tracking-[-1.5px] md:text-[58px]">
+          Hello!
+        </p>
+        <p className="mb-0 mt-3 text-[21px] font-medium leading-none md:text-[26px]">
+          Welcome to
+        </p>
         <img
-          className="onboarding-logo"
           src="/assets/pic/pic-2.png"
           alt="ReMind"
+          width="838"
+          height="518"
+          fetchPriority="high"
+          className="mt-10 h-auto w-[370px] max-w-none object-contain md:w-[390px]"
         />
-        <p className="onboarding-tagline">Rest Your Mind, Reset Your Day.</p>
-      </div>
-      <div className="onboarding-cta">
-        <h2>Grow Into Your Best Self !</h2>
-        <p>
+        <p className="-mt-1 text-[15px] font-medium md:text-lg">
+          Rest Your Mind, Reset Your Day.
+        </p>
+      </section>
+      <section className="flex min-h-[339px] flex-col px-8 pb-[128px] pt-3 md:min-h-screen md:justify-center md:px-[clamp(48px,8vw,120px)] md:pb-0 md:pt-0">
+        <div className="md:max-w-[570px] md:rounded-[36px] md:bg-white/55 md:p-12 md:shadow-[0_24px_70px_rgba(22,84,67,0.12)]">
+        <h1 className="m-0 font-['Playfair_Display'] text-[21px] font-bold italic leading-tight text-[#13977e] md:text-[38px]">
+          Grow Into Your Best Self !
+        </h1>
+        <p className="mb-[46px] mt-2 max-w-[330px] text-[13px] leading-[1.55] text-[#173d35] md:mb-5 md:max-w-[520px] md:text-[17px]">
           Reflect on your daily feelings, conquer stress, and unlock your true
           potential effortlessly.
         </p>
-        <button className="onboarding-start" onClick={() => next("welcome")}>
-          <Icon icon={faChevronRight} /> Get Started
-        </button>
-        <button className="onboarding-skip" onClick={() => next("login")}>
-          Skip
-        </button>
-      </div>
+        <div className="flex items-center justify-between gap-4">
+          <button
+            className="flex min-h-14 cursor-pointer items-center gap-3 rounded-[27px] bg-[#bfe3d4] py-2 pl-3 pr-6 text-[16px] font-bold text-[#075746] shadow-[0_12px_24px_rgba(24,113,87,0.14)] transition-transform hover:-translate-y-0.5 active:translate-y-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460]"
+            onClick={() => next("welcome")}
+          >
+            <span className="grid size-10 place-items-center rounded-full bg-[#087460] text-xl text-white">
+              <Icon icon={faChevronRight} />
+            </span>
+            Get Started
+          </button>
+          <button
+            className="absolute bottom-[132px] right-8 min-h-11 cursor-pointer px-2 text-[15px] font-bold text-[#174d3f] hover:text-[#087460] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460] md:static"
+            onClick={() => next("login")}
+          >
+            Skip
+          </button>
+        </div>
+        </div>
+      </section>
     </main>
   );
 }
@@ -483,85 +546,132 @@ function Auth({ screen, setScreen, enter }) {
       setBusy(false);
     }
   };
-  return (
-    <main id="main" className={`auth-page auth-${screen}`}>
-      <div className="auth-art">
-        <BrainMascot />
-        <div className="brand">
-          <b>ReMind</b>
-          <span>Rest Your Mind, Reset Your Day.</span>
-        </div>
-        {screen === "login" && (
-          <div className="auth-heading">
-            <h1>Hello!</h1>
-            <p>Welcome to ReMind</p>
+  if (screen === "welcome")
+    return (
+      <main
+        id="main"
+        className="relative isolate min-h-[100svh] overflow-hidden bg-[#edf7e8] font-['Poppins'] text-white md:grid md:grid-cols-[1.05fr_0.95fr]"
+      >
+        <img
+          src="/assets/pic/pic-62.png"
+          alt=""
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 -z-20 h-full w-full object-cover opacity-25 md:opacity-55"
+        />
+        <div
+          aria-hidden="true"
+          className="absolute left-[-460px] top-[328px] -z-10 h-[690px] w-[870px] rounded-[50%] bg-[#13836f] md:inset-y-0 md:left-0 md:h-auto md:w-[55%] md:rounded-none"
+        />
+        <section className="flex min-h-[100svh] flex-col justify-end px-5 pb-[70px] md:justify-center md:px-[clamp(48px,8vw,130px)] md:pb-0">
+          <div className="max-w-[430px]">
+            <h1 className="m-0 text-[40px] font-semibold leading-none tracking-[-1px] md:text-[64px]">
+              Welcome
+            </h1>
+            <p className="mb-5 mt-4 max-w-[335px] text-[15px] leading-[1.55] md:mb-8 md:max-w-[480px] md:text-lg">
+              A safe space to breathe, heal from exhaustion, and practice
+              self-care.
+              <br />
+              Let us help you rediscover peace and balance in your daily life.
+            </p>
+            <div className="grid gap-7 px-5 md:max-w-[390px] md:px-0">
+              <button
+                className="min-h-[54px] cursor-pointer rounded-[9px] bg-[#f6f9ec] px-6 text-[22px] font-semibold text-[#61a58f] shadow-[0_2px_5px_rgba(4,72,58,0.28)] transition-transform hover:-translate-y-0.5 active:translate-y-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                onClick={() => setScreen("signup")}
+              >
+                Create Account
+              </button>
+              <button
+                className="min-h-[54px] cursor-pointer rounded-[9px] bg-[#f6f9ec] px-4 text-[20px] font-semibold text-[#61a58f] shadow-[0_2px_5px_rgba(4,72,58,0.28)] transition-transform hover:-translate-y-0.5 active:translate-y-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                onClick={() => setScreen("login")}
+              >
+                Already have an account
+              </button>
+            </div>
           </div>
-        )}
-      </div>
-      {screen === "welcome" ? (
-        <section className="welcome-card">
-          <h1>Welcome</h1>
-          <p>
-            A safe space to breathe, heal from exhaustion, and practice
-            self-care.
-            <br />
-            Let us help you rediscover peace and balance in your daily life.
-          </p>
-          <button className="primary" onClick={() => setScreen("signup")}>
-            Create Account
-          </button>
-          <button className="text-button" onClick={() => setScreen("login")}>
-            Already have an account
-          </button>
         </section>
-      ) : (
-        <section className="auth-card">
+        <section className="absolute inset-x-0 top-10 -z-10 hidden items-center justify-center md:static md:z-0 md:flex">
+          <img
+            src="/assets/pic/pic-2.png"
+            alt="ReMind"
+            width="838"
+            height="518"
+            className="w-[min(72%,470px)] object-contain"
+          />
+        </section>
+      </main>
+    );
+
+  const isLogin = screen === "login";
+  return (
+    <>
+      <main
+        id="main"
+        className="min-h-[100svh] overflow-hidden bg-[#0f8a73] font-['Poppins'] text-[#242424] md:grid md:grid-cols-[0.9fr_1.1fr] md:bg-[#eaf4e5]"
+      >
+        <header className={`relative overflow-hidden bg-[#0f8a73] text-white ${isLogin ? "h-[260px]" : "h-[150px]"} md:h-screen`}>
+          <div
+            aria-hidden="true"
+            className="absolute inset-x-0 top-0 h-[155px] bg-[radial-gradient(circle,#a8d8bc_2px,transparent_2.6px)] bg-[length:13px_13px] opacity-80 md:h-[46%] md:bg-[length:16px_16px]"
+          />
+          <div className={`absolute left-8 z-10 ${isLogin ? "top-[160px]" : "hidden"} md:left-[clamp(48px,8vw,120px)] md:top-1/2 md:block md:-translate-y-1/2`}>
+            <h1 className="m-0 text-[43px] font-semibold leading-none md:text-[68px]">Hello!</h1>
+            <p className="mb-0 mt-3 text-[21px] font-medium md:text-[29px]">Welcome to ReMind</p>
+          </div>
+          <img
+            src={isLogin ? "/assets/pic/pic-57.png" : "/assets/pic/pic-58.png"}
+            alt=""
+            aria-hidden="true"
+            width={isLogin ? "250" : "286"}
+            height={isLogin ? "258" : "240"}
+            className={`absolute z-20 object-contain ${isLogin ? "bottom-[-28px] right-3 w-[128px]" : "hidden"} md:bottom-[10%] md:right-[7%] md:block md:w-[clamp(180px,20vw,300px)]`}
+          />
+        </header>
+        <section className={`relative z-10 -mt-[1px] min-h-[calc(100svh-259px)] rounded-t-[58px] bg-[#edf6e9] px-8 pb-8 ${isLogin ? "pt-2" : "min-h-[calc(100svh-149px)] pt-2"} md:mt-0 md:flex md:min-h-screen md:items-center md:rounded-none md:px-[clamp(56px,8vw,140px)] md:py-12`}>
+          <div className="mx-auto w-full max-w-[520px]">
           <button
-            className="back"
+            className={`mb-2 flex min-h-11 cursor-pointer items-center gap-2 text-[15px] font-semibold text-[#242424] hover:text-[#087460] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460] ${isLogin ? "sr-only md:not-sr-only" : ""}`}
             onClick={() => setScreen("welcome")}
             aria-label="Kembali"
           >
-            <Icon icon={faArrowLeft} />
-            {screen === "signup" && <span>Back to login</span>}
+            <Icon icon={faArrowLeft} className="text-[#087460]" />
+            <span>{isLogin ? "Back" : "Back to login"}</span>
           </button>
-          <BrainMascot small flex={screen === "signup"} />
-          <h1>{screen === "login" ? "Login" : "Create Your Account"}</h1>
-          <p>{screen === "login" ? "" : "Lengkapi data untuk memulai"}</p>
-          <form onSubmit={submitAuth}>
-            {screen === "signup" && (
-              <Field
+          <h1 className={`m-0 font-semibold tracking-[-1px] ${isLogin ? "mb-8 text-[39px]" : "mb-6 text-[30px]"} md:text-[44px]`}>
+            {isLogin ? "Login" : "Create Your Account"}
+          </h1>
+          <form className={isLogin ? "space-y-6" : "space-y-[26px]"} onSubmit={submitAuth}>
+            {!isLogin && (
+              <AuthField
                 name="fullName"
                 label="Nama lengkap"
                 placeholder="Enter your full name"
                 icon={faUserLarge}
               />
             )}
-            <Field
+            <AuthField
               name="email"
               label="Email"
               type="email"
-              placeholder={screen === "login" ? "Email" : "Enter your email"}
+              placeholder={isLogin ? "Email" : "Enter your email"}
               icon={faEnvelope}
             />
-            <Field
+            <AuthField
               name="password"
               label="Password"
               type="password"
-              placeholder={
-                screen === "login" ? "Password" : "Create a password"
-              }
+              placeholder={isLogin ? "Password" : "Create a password"}
               icon={faLock}
             />
-            {screen === "signup" && (
+            {!isLogin && (
               <>
-                <Field
+                <AuthField
                   name="confirmPassword"
                   label="Konfirmasi password"
                   type="password"
                   placeholder="Confirm password"
                   icon={faLock}
                 />
-                <Field
+                <AuthField
                   name="phone"
                   label="Nomor telepon"
                   type="tel"
@@ -569,32 +679,37 @@ function Auth({ screen, setScreen, enter }) {
                   icon={faMobileScreen}
                 />
               </>
-            )}{" "}
-            {screen === "login" && (
+            )}
+            {isLogin && (
               <button
                 type="button"
-                className="forgot"
+                className="-mt-3 ml-auto block min-h-11 cursor-pointer px-1 text-[13px] font-medium hover:text-[#087460] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460]"
                 onClick={() => setShowReset(true)}
               >
                 Forgot Password
               </button>
             )}
             {message && (
-              <p className="auth-message" role="status">
+              <p className="m-0 rounded-xl bg-[#f8dbe1] px-4 py-3 text-center text-xs font-semibold text-[#8c3e4d]" role="status">
                 {message}
               </p>
             )}
-            <button className="primary" type="submit" disabled={busy}>
-              {busy ? "Memproses…" : screen === "login" ? "Login" : "Sign Up"}
+            <button
+              className={`min-h-[46px] w-full cursor-pointer rounded-[28px] bg-[#118773] px-6 text-[17px] font-semibold text-white transition-colors hover:bg-[#087460] active:bg-[#075746] disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460] ${isLogin ? "!mt-2" : ""}`}
+              type="submit"
+              disabled={busy}
+            >
+              {busy ? "Memproses…" : isLogin ? "Login" : "Sign Up"}
             </button>
           </form>
-          {screen === "login" && (
+          {isLogin && (
             <>
-              <div className="or">
-                <span>Or login with</span>
+              <div className="my-7 flex items-center gap-4 text-[13px] text-[#7d827d] before:h-px before:flex-1 before:bg-[#8c928c] after:h-px after:flex-1 after:bg-[#8c928c]">
+                <span className="shrink-0">Or login with</span>
               </div>
-              <div className="social">
+              <div className="flex justify-center gap-4">
                 <button
+                  className="grid size-12 cursor-pointer place-items-center rounded-full transition-transform hover:scale-105 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460]"
                   onClick={async () => {
                     if (!hasSupabase) return enter();
                     try {
@@ -607,9 +722,10 @@ function Auth({ screen, setScreen, enter }) {
                   }}
                   aria-label="Login dengan Facebook"
                 >
-                  <img src="/assets/pic/pic-0.png" alt="" />
+                  <img className="size-12 object-contain" src="/assets/pic/pic-0.png" alt="" />
                 </button>
                 <button
+                  className="grid size-12 cursor-pointer place-items-center rounded-full transition-transform hover:scale-105 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460]"
                   onClick={async () => {
                     if (!hasSupabase) return enter();
                     try {
@@ -622,18 +738,30 @@ function Auth({ screen, setScreen, enter }) {
                   }}
                   aria-label="Login dengan Google"
                 >
-                  <img src="/assets/pic/pic-1.png" alt="" />
+                  <img className="size-12 object-contain" src="/assets/pic/pic-1.png" alt="" />
                 </button>
               </div>
             </>
           )}
-          {screen === "login" && (
-            <button className="text-button" onClick={() => setScreen("signup")}>
-              Don’t have account? Sign Up
+          {isLogin && (
+            <button
+              className="mx-auto mt-7 block min-h-11 cursor-pointer px-2 text-[13px] text-[#6e736f] hover:text-[#087460] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460]"
+              onClick={() => setScreen("signup")}
+            >
+              Don’t have account? <span className="text-[#62b7a5]">Sign Up</span>
             </button>
           )}
+          {!isLogin && (
+            <img
+              src="/assets/pic/pic-58.png"
+              alt=""
+              aria-hidden="true"
+              className="mx-auto mt-2 w-[145px] object-contain md:hidden"
+            />
+          )}
+          </div>
         </section>
-      )}
+      </main>
       {showReset && (
         <Modal title="Reset Password" close={() => setShowReset(false)}>
           <form
@@ -688,7 +816,26 @@ function Auth({ screen, setScreen, enter }) {
           </form>
         </Modal>
       )}
-    </main>
+    </>
+  );
+}
+function AuthField({ label, icon, ...props }) {
+  const id = `auth-${label.toLowerCase().replace(/\s/g, "-")}`;
+  return (
+    <label className="relative block" htmlFor={id}>
+      <span className="sr-only">{label}</span>
+      <Icon
+        icon={icon}
+        aria-hidden="true"
+        className="pointer-events-none absolute left-7 top-1/2 z-10 -translate-y-1/2 text-[14px] text-[#a2a2a2]"
+      />
+      <input
+        id={id}
+        required
+        className="h-[46px] w-full rounded-[26px] border-0 bg-white py-3 pl-[62px] pr-5 text-[14px] font-semibold text-[#333] outline-none placeholder:text-[#a2a2a2] focus-visible:ring-2 focus-visible:ring-[#138a74] focus-visible:ring-offset-2 md:h-[54px] md:text-base"
+        {...props}
+      />
+    </label>
   );
 }
 function Field({ label, icon, ...props }) {
@@ -709,46 +856,69 @@ function BrainMascot({ small = false, flex = false }) {
 function _OldBrainMascot({ small = false }) {
   return (
     <div className={"brain " + (small ? "small" : "")} aria-hidden="true">
-      <img src="/assets/brain-welcome.png" width="571" height="588" alt="" />
+      <img src="/assets/pic/pic-57.png" width="250" height="258" alt="" />
     </div>
   );
 }
 function BottomNav({ current, go }) {
   return (
-    <nav className="bottom-nav" aria-label="Navigasi utama">
-      <div className="desktop-brand">
+    <nav
+      className="fixed inset-x-0 bottom-0 z-50 h-[74px] bg-[#087965] px-2 pb-[19px] pt-[15px] text-[#087460] md:sticky md:inset-auto md:top-0 md:order-first md:flex md:h-screen md:w-[270px] md:shrink-0 md:flex-col md:bg-[#0d705e] md:p-6 md:text-white"
+      aria-label="Navigasi utama"
+    >
+      <div className="hidden items-center gap-3 border-b border-white/20 pb-6 md:flex">
         <img
-          src="/assets/remind-logo-full.png"
-          width="1004"
-          height="1004"
-          alt="ReMind"
+          src="/assets/pic/pic-3.png"
+          width="92"
+          height="86"
+          alt=""
+          className="size-14 object-contain"
         />
-        <span>
-          Rest Your Mind,
-          <br />
-          Reset Your Day.
-        </span>
+        <div>
+          <img
+            src="/assets/pic/pic-4.png"
+            width="146"
+            height="56"
+            alt="ReMind"
+            className="w-[112px] object-contain brightness-0 invert"
+          />
+          <span className="mt-1 block text-[10px] leading-tight text-white/75">
+            Rest Your Mind, Reset Your Day.
+          </span>
+        </div>
       </div>
-      <div className="nav-items">
+      <div className="grid h-[40px] grid-cols-6 rounded-[23px] bg-[#f5f7e9] px-1 md:mt-8 md:h-auto md:grid-cols-1 md:gap-2 md:rounded-none md:bg-transparent md:px-0">
         {nav.map(([id, label, icon]) => (
           <button
             key={id}
-            className={current === id ? "active" : ""}
+            className={`flex min-w-0 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-xl px-1 text-[13px] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f3d56a] md:min-h-12 md:flex-row md:justify-start md:gap-3 md:px-4 md:text-[17px] ${current === id ? "bg-[#c5e1d2] text-[#075746] md:bg-white/15 md:text-white" : "text-[#087460] hover:bg-[#dcebdd] md:text-white/75 md:hover:bg-white/10 md:hover:text-white"}`}
             onClick={() => go(id)}
             aria-current={current === id ? "page" : undefined}
           >
             <Icon icon={icon} />
-            <span>{label}</span>
+            <span className="max-w-full truncate text-[8px] font-medium leading-none md:text-[14px] md:font-semibold md:leading-normal">
+              {label}
+            </span>
           </button>
         ))}
       </div>
-      <div className="desktop-support">
-        <Icon icon={faHeartPulse} />
+      <div className="mt-auto hidden rounded-2xl bg-white/10 p-4 md:block">
+        <Icon
+          icon={faHeartPulse}
+          className="mb-3 text-2xl text-[#f2a1b8]"
+        />
         <div>
-          <b>Butuh bantuan?</b>
-          <span>Dukungan tersedia untukmu</span>
+          <b className="block">Butuh bantuan?</b>
+          <span className="text-xs text-white/70">
+            Dukungan tersedia untukmu
+          </span>
         </div>
-        <button onClick={() => go("sos")}>Buka SOS</button>
+        <button
+          className="mt-4 min-h-11 w-full cursor-pointer rounded-xl bg-[#f6f8eb] font-bold text-[#a7374a] hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          onClick={() => go("sos")}
+        >
+          Buka SOS
+        </button>
       </div>
     </nav>
   );
@@ -764,7 +934,7 @@ function Header({ title, subtitle, action }) {
     </header>
   );
 }
-function Home({ go, user }) {
+function LegacyHome({ go, user }) {
   return (
     <>
       <section className="home-hero">
@@ -791,8 +961,8 @@ function Home({ go, user }) {
           alt=""
         />
         <div className="mood-question">
-          <img className="deco deco-leaf" src="/assets/home-leaf.png" alt="" aria-hidden="true" />
-          <img className="deco deco-twig" src="/assets/home-twig.png" alt="" aria-hidden="true" />
+          <img className="deco deco-leaf" src="/assets/pic/pic-7.png" alt="" aria-hidden="true" />
+          <img className="deco deco-twig" src="/assets/pic/pic-8.png" alt="" aria-hidden="true" />
           <h2>How are you feeling today?</h2>
           <div className="moods">
             {moodOptions.map(([m, , c]) => (
@@ -812,13 +982,13 @@ function Home({ go, user }) {
           </button>
           <img
             className="deco deco-caterpillar"
-            src="/assets/home-caterpillar.png"
+            src="/assets/pic/pic-9.png"
             alt=""
             aria-hidden="true"
           />
           <img
             className="deco deco-flowers"
-            src="/assets/home-flowers.png"
+            src="/assets/pic/pic-10.png"
             alt=""
             aria-hidden="true"
           />
@@ -855,7 +1025,7 @@ function Home({ go, user }) {
       </section>
       <section className="daily-reminder">
         <img
-          src="/assets/success-leaves.png"
+          src="/assets/pic/pic-22.png"
           width="154"
           height="94"
           alt=""
@@ -872,7 +1042,7 @@ function Home({ go, user }) {
     </>
   );
 }
-function Feature({ icon, image, title, text, onClick }) {
+function LegacyFeature({ icon, image, title, text, onClick }) {
   return (
     <button className="feature" onClick={onClick}>
       <span>
@@ -881,6 +1051,75 @@ function Feature({ icon, image, title, text, onClick }) {
       <b>{title}</b>
       <small>{text}</small>
       <Icon className="chev" icon={faChevronRight} />
+    </button>
+  );
+}
+function Home({ go, user }) {
+  return (
+    <div className="min-h-[calc(100svh-74px)] bg-[#cfe8d2] font-['Poppins'] text-[#163f35] md:grid md:min-h-screen md:grid-cols-[minmax(430px,0.95fr)_minmax(480px,1.05fr)] md:grid-rows-[auto_auto] md:gap-7 md:bg-[#eef5ec] md:p-8">
+      <section className="relative h-[330px] overflow-hidden px-4 pt-2 md:h-auto md:min-h-[520px] md:rounded-[32px] md:bg-[#cfe8d2] md:p-8 md:shadow-[0_18px_45px_rgba(22,84,67,0.12)]">
+        <img src="/assets/pic/pic-62.png" alt="" aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-25" />
+        <div className="relative z-10 flex h-[54px] items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <img src="/assets/pic/pic-3.png" width="92" height="86" alt="" className="h-[45px] w-[48px] object-contain md:h-16 md:w-16" />
+            <img src="/assets/pic/pic-4.png" width="146" height="56" alt="ReMind" className="w-[76px] object-contain md:w-[112px]" />
+          </div>
+          <button className="grid size-[50px] cursor-pointer place-items-center rounded-full transition-transform hover:scale-105 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460] md:size-16" onClick={() => go("sos")} aria-label="Buka SOS">
+            <img src="/assets/pic/pic-6.png" width="102" height="100" alt="" className="size-full object-contain" />
+          </button>
+        </div>
+        <div className="relative z-10 mt-1 flex items-center gap-3 md:mt-5">
+          <img src="/assets/pic/pic-5.png" width="108" height="82" alt="" className="h-[55px] w-[62px] shrink-0 object-contain md:h-[82px] md:w-[108px]" />
+          <h1 className="m-0 text-[17px] font-medium leading-[1.45] md:text-[24px]">Halo, {user.name}!♡</h1>
+        </div>
+        <div className="absolute inset-x-4 bottom-3 z-10 h-[178px] rounded-[38px] border-[3px] border-[#6f9d7c] bg-[#d9ecd6]/95 px-7 pb-2 pt-3 md:inset-x-8 md:bottom-8 md:h-[245px] md:px-10 md:pt-6">
+          <img src="/assets/pic/pic-7.png" alt="" aria-hidden="true" className="absolute -left-1 bottom-1 h-12 w-10 object-contain" />
+          <img src="/assets/pic/pic-8.png" alt="" aria-hidden="true" className="absolute -right-1 top-0 h-16 w-12 object-contain" />
+          <h2 className="m-0 text-center text-[14px] font-bold md:text-xl">How are you feeling today?</h2>
+          <div className="mt-2 grid grid-cols-5 gap-1 md:mt-5 md:gap-3">
+            {moodOptions.map(([m, icon, c]) => (
+              <button key={m} aria-label={m} onClick={() => go("mood")} className="flex min-w-0 cursor-pointer flex-col items-center gap-1 rounded-xl py-0.5 transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#087460]">
+                <span className="grid size-[42px] place-items-center rounded-full border-[3px] border-white text-[21px] text-[#355f4f] shadow-sm md:size-[62px] md:text-[30px]" style={{ backgroundColor: c }}><Icon icon={icon} /></span>
+                <span className="max-w-full truncate text-[11px] font-medium md:text-sm">{m}</span>
+              </button>
+            ))}
+          </div>
+          <button className="mx-auto mt-1 flex min-h-[29px] w-[196px] cursor-pointer items-center justify-center gap-1 rounded-[18px] bg-[#72a77b] px-5 text-[12px] font-medium text-white hover:bg-[#5d9168] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#075746] md:mt-4 md:min-h-11 md:w-[260px] md:text-base" onClick={() => go("mood")}>
+            Check My Mood <Icon icon={faChevronRight} />
+          </button>
+          <img src="/assets/pic/pic-9.png" alt="" aria-hidden="true" className="absolute bottom-1 right-5 h-5 w-9 object-contain" />
+          <img src="/assets/pic/pic-10.png" alt="" aria-hidden="true" className="absolute bottom-0 left-0 h-10 w-12 object-contain" />
+        </div>
+      </section>
+      <section className="rounded-[36px] bg-white px-[18px] pb-[18px] pt-3 md:rounded-[32px] md:px-8 md:py-7 md:shadow-[0_18px_45px_rgba(22,84,67,0.10)]">
+        <h2 className="mb-0 mt-0 font-['Playfair_Display'] text-[17px] font-bold md:mb-3 md:text-[26px]">Your Wellness</h2>
+        <div className="grid grid-cols-2 gap-x-4 gap-y-5 md:gap-5">
+          <Feature image="/assets/pic/pic-11.png" title="Pomodoro" text="Belajar & Istirahat" onClick={() => go("pomodoro")} />
+          <Feature image="/assets/pic/pic-12.png" title="Grounding" text="Tenangkan Diri" onClick={() => go("sos")} />
+          <Feature image="/assets/pic/pic-13.png" title="Mental Health" text="Edukasi & Flashcard" onClick={() => go("education")} />
+          <Feature image="/assets/pic/pic-16.png" title="Mood Playlist" text="Musik Sesuai Suasana" onClick={() => go("playlist")} />
+        </div>
+      </section>
+      <section className="relative mx-1 mb-0 mt-5 min-h-[102px] overflow-hidden rounded-[42px] border-[8px] border-white bg-[#f4f7e7] px-[82px] py-3 md:col-span-2 md:mx-0 md:my-0 md:min-h-[130px] md:rounded-[32px] md:px-[170px] md:py-7">
+        <img src="/assets/pic/pic-22.png" width="222" height="272" alt="" className="absolute -bottom-16 -left-8 h-[150px] w-[125px] object-contain md:-bottom-28 md:h-[260px] md:w-[210px]" />
+        <img src="/assets/pic/pic-20.png" width="130" height="152" alt="" className="absolute -right-2 -top-3 h-20 w-16 rotate-[-18deg] object-contain md:h-28 md:w-24" />
+        <div className="relative z-10">
+          <b className="font-['Playfair_Display'] text-[16px] font-bold md:text-[22px]">Daily Reminder</b>
+          <p className="mb-0 mt-1 text-[11px] leading-[1.45] md:text-[15px]">“You don't have to do everything at once.<br />Take it one step at a time”</p>
+        </div>
+      </section>
+    </div>
+  );
+}
+function Feature({ icon, image, title, text, onClick }) {
+  return (
+    <button className="relative flex min-h-[114px] cursor-pointer flex-col items-start rounded-[22px] bg-[#e6eed9] px-5 pb-3 pt-2 text-left text-[#174d3f] transition-transform odd:bg-[#e7efda] even:bg-[#b9d2b9] hover:-translate-y-0.5 active:translate-y-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460] md:min-h-[190px] md:px-7 md:py-5" onClick={onClick}>
+      <span className="grid size-[54px] place-items-center rounded-full bg-[#c4ddd0] md:size-[82px]">
+        {image ? <img src={image} alt="" className="size-full object-contain" /> : <Icon icon={icon} />}
+      </span>
+      <b className="mt-0.5 text-[13px] font-bold md:mt-3 md:text-xl">{title}</b>
+      <small className="text-[9px] leading-tight text-[#46695d] md:text-sm">{text}</small>
+      <Icon className="absolute right-3 top-1/2 text-[14px] text-[#075c49] md:right-5 md:text-xl" icon={faChevronRight} />
     </button>
   );
 }
@@ -905,55 +1144,59 @@ function Tasks({ tasks, setTasks, flash, go }) {
         ),
       );
     return (
-      <section className="task-detail-page">
-        <header>
-          <button onClick={() => setSelected(null)} aria-label="Kembali">
+      <section className="relative mx-auto min-h-[calc(100dvh-69px)] w-full max-w-[1120px] overflow-hidden bg-white pb-10 text-[#174f38] md:min-h-screen">
+        <div className="absolute inset-x-0 top-0 h-[153px] bg-[#d9efdc] bg-[url('/assets/pic/pic-62.png')] bg-cover opacity-80" />
+        <header className="relative z-10 flex min-h-12 items-center gap-5 px-5 pt-2 md:px-12 md:pt-7">
+          <button className="grid size-11 place-items-center text-[27px] text-[#73a883] focus-visible:outline-2 focus-visible:outline-[#087460]" onClick={() => setSelected(null)} aria-label="Kembali">
             <Icon icon={faArrowLeft} />
           </button>
-          <h1>Detail Tugas</h1>
-          <button onClick={() => { setSelected(null); setSearching(true); }} aria-label="Cari">
+          <h1 className="text-[18px] font-semibold md:text-2xl">Detail Tugas</h1>
+          <button className="ml-auto grid size-11 place-items-center text-xl text-white focus-visible:outline-2 focus-visible:outline-[#087460]" onClick={() => { setSelected(null); setSearching(true); }} aria-label="Cari">
             <Icon icon={faMagnifyingGlass} />
           </button>
         </header>
-        <div className="task-detail-greeting">
-          <img src="/assets/pic/pic-17.png" alt="" />
-          <p>Hai, Ramadhani<br />Septhea Dwi Putri<br /><b>“Yuk, selesaikan tugasmu satu per satu!”</b></p>
+        <div className="relative z-10 flex items-center px-4 md:px-12">
+          <img className="h-[76px] w-[70px] object-contain md:h-24 md:w-24" src="/assets/pic/pic-17.png" alt="Maskot ReMind" />
+          <p className="text-[18px] font-semibold leading-[23px] md:text-2xl">Hai, Ramadhani<br />Septhea Dwi Putri<br /><b className="text-[13px] text-white [text-shadow:0_2px_3px_rgba(34,82,54,.45)] md:text-base">“Yuk, selesaikan tugasmu satu per satu!”</b></p>
         </div>
-        <span className={`detail-priority ${selected.priority.toLowerCase()}`}>{selected.priority}</span>
-        {[selected, ...tasks.filter((task) => task.id !== selected.id).slice(0, 1)].map((task) => (
-          <article key={task.id}>
-            <h2>{task.title}</h2>
-            <div><span><Icon icon={faClock} /> {new Date(task.date).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</span><span><Icon icon={faClock} /> {task.time}</span></div>
-            <p>Catatan : <b>{task.note || "-"}</b></p>
-            <button onClick={() => toggle(task.id)}><i className={task.done ? "checked" : ""} /> {task.done ? "Tandai Belum Selesai" : "Tandai Selesai"}</button>
-          </article>
-        ))}
-        <footer><b>Kamu pasti bisa!</b><small>Jangan lupa istirahat juga ya</small></footer>
+        <span className={`relative z-10 ml-8 inline-block min-w-[117px] rounded-full px-4 text-center text-[18px] leading-6 text-[#242424] ${selected.priority === "Tinggi" ? "bg-[#e25b55]" : selected.priority === "Sedang" ? "bg-[#a8baaa]" : "bg-[#9fb69e]"}`}>{selected.priority}</span>
+        <div className="relative z-10 mx-auto mt-7 grid max-w-[900px] gap-3 px-[15px] md:grid-cols-2 md:px-10">
+          {[selected, ...tasks.filter((task) => task.id !== selected.id).slice(0, 1)].map((task) => (
+            <article className="rounded-[46px] bg-[#a9bead] px-8 pb-3 pt-2 text-white md:min-h-[260px] md:px-10 md:py-6" key={task.id}>
+              <h2 className="text-center text-[18px] font-semibold leading-[23px] md:text-xl">{task.title}</h2>
+              <div className="mt-1 flex items-center justify-between border-t-2 border-white pt-1 text-[15px] font-semibold md:mt-5 md:pt-3"><span><Icon className="mr-3 text-[30px]" icon={faClock} /> {new Date(task.date).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</span><span><Icon className="mr-3 text-[30px]" icon={faClock} /> {task.time}</span></div>
+              <p className="mt-4 text-[17px] font-semibold">Catatan : <b className="float-right mr-[38%]">{task.note || "-"}</b></p>
+              <button className="mx-auto mt-7 flex min-h-10 w-[210px] items-center justify-center rounded-full bg-white text-[17px] font-semibold text-[#242424] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460]" onClick={() => toggle(task.id)}><i className={`mr-3 size-6 rounded-sm !border-2 !border-[#138b78] ${task.done ? "bg-[#138b78]" : ""}`} /> {task.done ? "Tandai Belum Selesai" : "Tandai Selesai"}</button>
+            </article>
+          ))}
+        </div>
+        <footer className="mt-9 text-center text-[#242424]"><b className="block text-lg font-medium">Kamu pasti bisa!</b><small className="block text-[13px]">Jangan lupa istirahat juga ya</small></footer>
       </section>
     );
   }
   if (tasks.length > 0 && tasks.every((task) => task.done))
     return (
-      <section className="tasks-complete-page">
-        <img src="/assets/pic/pic-31.png" alt="" />
-        <h1>Semua tugas selesai!</h1>
-        <p>Kamu sudah melakukan yang terbaik hari ini</p>
-        <blockquote>Jangan lupa istirahat ya,<br />kamu juga perlu waktu buat diri sendiri</blockquote>
-        <button onClick={() => go("home")}>Kembali ke Beranda</button>
+      <section className="relative mx-auto min-h-[calc(100dvh-69px)] w-full max-w-[1120px] overflow-hidden bg-[#e3f5e5] bg-[url('/assets/pic/pic-62.png')] bg-cover px-4 pt-[105px] text-center text-[#075746] md:min-h-screen md:pt-24">
+        <img className="mx-auto w-[225px] md:w-[280px]" src="/assets/pic/pic-31.png" alt="Maskot menyelesaikan tugas" />
+        <h1 className="mt-5 text-[26px] font-bold md:text-4xl">Semua tugas selesai!</h1>
+        <p className="mt-2 text-[16px] font-medium md:text-xl">Kamu sudah melakukan yang terbaik hari ini</p>
+        <blockquote className="relative mx-auto mt-4 flex min-h-[164px] max-w-[358px] items-start justify-center rounded-[45px] bg-white px-8 pt-7 text-[16px] leading-6 text-[#174f38] md:max-w-[560px] md:text-xl">Jangan lupa istirahat ya,<br />kamu juga perlu waktu buat diri sendiri<img className="absolute -bottom-5 left-1/2 w-[120px] -translate-x-1/2" src="/assets/pic/pic-19.png" alt="" /></blockquote>
+        <button className="mt-10 min-h-[50px] w-[250px] rounded-full bg-[#61aa91] text-[16px] text-white hover:bg-[#4c957d] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#075746]" onClick={() => go("home")}>Kembali ke Beranda</button>
       </section>
     );
   if (searching)
     return (
-      <section className="tasks-search-page">
-        <header>
-          <button onClick={() => setSearching(false)} aria-label="Kembali">
+      <section className="mx-auto min-h-[calc(100dvh-69px)] w-full max-w-[1120px] bg-[#e3f5e5] bg-[url('/assets/pic/pic-62.png')] bg-cover px-7 pt-4 text-[#087f6d] md:min-h-screen md:px-16 md:pt-10">
+        <header className="flex items-center gap-8">
+          <button className="grid size-11 place-items-center text-[27px] text-[#73a883] focus-visible:outline-2 focus-visible:outline-[#087460]" onClick={() => setSearching(false)} aria-label="Kembali">
             <Icon icon={faArrowLeft} />
           </button>
-          <h1>Telusuri</h1>
+          <h1 className="text-[18px] font-medium md:text-2xl">Telusuri</h1>
         </header>
-        <label className="search">
-          <Icon icon={faMagnifyingGlass} />
+        <label className="mx-auto mt-5 flex min-h-[35px] max-w-[740px] items-center rounded-[11px] bg-[#fbfbf5] px-3 text-[#3c9b89]">
+          <Icon className="text-xl" icon={faMagnifyingGlass} />
           <input
+            className="w-full bg-transparent text-center text-[16px] outline-none"
             autoFocus
             aria-label="Cari"
             placeholder="Cari"
@@ -961,61 +1204,65 @@ function Tasks({ tasks, setTasks, flash, go }) {
             onChange={(e) => setSearch(e.target.value)}
           />
         </label>
-        <p>Hasil Pencarian ({visible.length})</p>
-        <div className="search-results">
+        <p className="mx-auto mt-3 max-w-[740px] text-[15px]">Hasil Pencarian ({visible.length})</p>
+        <div className="mx-auto mt-4 grid max-w-[740px] gap-[14px] md:grid-cols-2">
           {visible.map((task) => (
-            <button key={task.id} onClick={() => setSearching(false)}>
-              <Icon icon={faClock} />
-              <span>{task.title}</span>
+            <button className="flex min-h-[61px] items-center rounded-[11px] bg-[#f4faef] px-3 text-[#087f6d] hover:bg-[#e5f0df] focus-visible:outline-2 focus-visible:outline-[#087460]" key={task.id} onClick={() => { setSearching(false); setSelected(task); }}>
+              <Icon className="text-[31px]" icon={faClock} />
+              <span className="flex-1 text-center text-[15px] font-semibold">{task.title}</span>
             </button>
           ))}
-          <button onClick={() => setSearching(false)}>
-            <Icon icon={faClock} />
-            <span>Mood Tracker</span>
+          <button className="flex min-h-[61px] items-center rounded-[11px] bg-[#f4faef] px-3 text-[#087f6d] hover:bg-[#e5f0df] focus-visible:outline-2 focus-visible:outline-[#087460]" onClick={() => go("mood")}>
+            <Icon className="text-[31px]" icon={faClock} />
+            <span className="flex-1 text-center text-[15px] font-semibold">Mood Tracker</span>
           </button>
         </div>
       </section>
     );
   return (
     <>
-      <section className="tasks-hero">
-        <div className="tasks-toolbar">
-          <button onClick={() => go("home")} aria-label="Kembali">
+      <section className="relative mx-auto w-full max-w-[1120px] bg-[#e3f5e5] bg-[url('/assets/pic/pic-62.png')] bg-cover px-5 pb-3 pt-2 text-[#174f38] md:px-12 md:pb-8 md:pt-7">
+        <div className="flex items-center">
+          <button className="grid size-11 place-items-center text-[27px] text-[#73a883] focus-visible:outline-2 focus-visible:outline-[#087460]" onClick={() => go("home")} aria-label="Kembali">
             <Icon icon={faArrowLeft} />
           </button>
-          <button onClick={() => setSearching(true)} aria-label="Cari">
+          <button className="ml-auto grid size-11 place-items-center text-xl text-white focus-visible:outline-2 focus-visible:outline-[#087460]" onClick={() => setSearching(true)} aria-label="Cari">
             <Icon icon={faMagnifyingGlass} />
           </button>
-          <button onClick={() => setShowReminder(true)} aria-label="Reminder">
-            <Icon icon={faMusic} />
+          <button className="grid size-11 place-items-center text-xl text-white focus-visible:outline-2 focus-visible:outline-[#087460]" onClick={() => setShowReminder(true)} aria-label="Reminder">
+            <Icon icon={faBell} />
           </button>
         </div>
-        <img src="/assets/pic/pic-17.png" alt="" width="86" height="77" />
-        <div>
-          <h1>
+        <div className="-mt-2 flex items-center md:mt-0">
+          <img className="h-[77px] w-[76px] object-contain md:h-28 md:w-28" src="/assets/pic/pic-17.png" alt="Maskot ReMind" width="86" height="77" />
+          <div>
+          <h1 className="text-[18px] font-semibold leading-[22px] md:text-2xl md:leading-7">
             Hai, Ramadhani
             <br />
             Septhea Dwi Putri
           </h1>
-          <p>“Yuk, selesaikan tugasmu satu per satu!”</p>
+          <p className="text-[13px] font-bold text-white [text-shadow:0_2px_3px_rgba(34,82,54,.48)] md:text-base">“Yuk, selesaikan tugasmu satu per satu!”</p>
+          </div>
         </div>
-        <aside>
-          <b>{percent}%</b>
-          <span>Selesai</span>
-        </aside>
-        <h2>Checklist Tugas</h2>
-        <button className="add-task" onClick={() => setAdding(true)}>
+        <div className="mt-1 flex items-end justify-between md:mx-auto md:max-w-[820px]">
+          <h2 className="text-[18px] font-medium md:text-2xl">Checklist Tugas</h2>
+          <aside className="flex min-h-[78px] min-w-[155px] items-center justify-center gap-2 rounded-[18px] !border-2 !border-[#79a784] bg-white/30 md:min-w-[210px]">
+            <b className="grid size-[57px] place-items-center rounded-full !border-[6px] !border-[#075746] bg-[#d9efdc] text-[16px] text-[#242424]">{percent}%</b>
+            <span className="text-[17px] font-semibold">Selesai</span>
+          </aside>
+        </div>
+        <button className="mx-auto mt-3 flex min-h-[61px] w-full max-w-[335px] items-center justify-center gap-4 rounded-full !border-[3px] !border-black bg-[#7faa8a] text-[18px] font-semibold text-white shadow-[7px_8px_0_#000] hover:bg-[#719b7c] focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#087460] md:max-w-[520px]" onClick={() => setAdding(true)}>
           <Icon icon={faPlus} /> Tambah Tugas
         </button>
       </section>
-      <section className="section tasks-content">
-        <h2>Hari Ini</h2>
+      <section className="mx-auto min-h-[430px] w-full max-w-[1120px] bg-white px-[13px] pb-12 pt-4 text-[#174f38] md:px-12 md:py-8">
+        <h2 className="ml-2 text-[18px] font-medium md:text-2xl">Hari Ini</h2>
         {visible.length ? (
-          <div className="task-list">
+          <div className="mx-auto mt-1 min-h-[365px] max-w-[900px] overflow-hidden rounded-[52px] bg-[#80aa8b] pt-6 md:grid md:grid-cols-2 md:gap-px md:rounded-[38px] md:p-6">
             {visible.map((t) => (
-              <article className="task" key={t.id}>
+              <article className="relative flex min-h-[65px] items-center border-b border-white px-5 text-white md:rounded-2xl md:border md:px-4" key={t.id}>
                 <button
-                  className={"check " + (t.done ? "done" : "")}
+                  className={`grid size-[28px] shrink-0 place-items-center rounded-sm !border-[3px] !border-white text-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${t.done ? "bg-white text-[#78aa8b]" : "bg-transparent"}`}
                   onClick={() =>
                     setTasks(
                       tasks.map((x) =>
@@ -1029,21 +1276,18 @@ function Tasks({ tasks, setTasks, flash, go }) {
                 >
                   {t.done && <Icon icon={faCircleCheck} />}
                 </button>
-                <button className="task-body" onClick={() => setSelected(t)}>
-                  <h2>{t.title}</h2>
-                  <p>
+                <button className="min-w-0 flex-1 px-2 text-left focus-visible:outline-2 focus-visible:outline-white" onClick={() => setSelected(t)}>
+                  <h2 className="text-[12px] font-semibold leading-[14px]">{t.title}</h2>
+                  {!t.done && <p className="text-[11px] font-semibold leading-[14px]">
                     {new Date(t.date).toLocaleDateString("id-ID", {
                       day: "numeric",
                       month: "long",
                       year: "numeric",
-                    })}{" "}
-                    · {t.time}
-                  </p>
-                  <small>{t.note}</small>
+                    })}
+                  </p>}
+                  {!t.done && t.note && <small className="block text-[10px] leading-[12px]">{t.note}</small>}
                 </button>
-                <span className={"priority " + t.priority.toLowerCase()}>
-                  {t.priority}
-                </span>
+                <span className={`h-[11px] w-[73px] shrink-0 rounded-full ${t.priority === "Tinggi" ? "bg-[#ef6c80]" : t.priority === "Sedang" ? "bg-[#f4f486]" : "bg-[#a9c39f]"}`} aria-label={`Prioritas ${t.priority}`} />
               </article>
             ))}
           </div>
@@ -1065,12 +1309,12 @@ function Tasks({ tasks, setTasks, flash, go }) {
         />
       )}
       {showReminder && (
-        <div className="reminder-overlay">
-          <div role="dialog" aria-modal="true" aria-label="Reminder tugas">
-            <Icon icon={faMusic} />
-            <h2>Reminder</h2>
-            <p>Tugas “Membuat PPT presentasi”<br />akan dimulai dalam 10 menit.</p>
-            <div><button onClick={() => setShowReminder(false)}>Nanti</button><button onClick={() => setShowReminder(false)}>Oke</button></div>
+        <div className="fixed inset-0 z-[100] grid place-items-center bg-black/10 px-4">
+          <div className="w-full max-w-[360px] rounded-[48px] bg-white px-8 pb-7 pt-7 text-center text-[#111] shadow-xl md:max-w-[460px]" role="dialog" aria-modal="true" aria-label="Reminder tugas">
+            <Icon className="text-[35px]" icon={faBell} />
+            <h2 className="mt-1 text-[18px] font-semibold">Reminder</h2>
+            <p className="mt-1 text-[17px] leading-[22px]">Tugas “Membuat PPT presentasi”<br />akan dimulai dalam 10 menit.</p>
+            <div className="mt-10 flex justify-between gap-8"><button className="min-h-[40px] flex-1 rounded-full !border-[4px] !border-[#075b2a] bg-white text-[16px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460]" onClick={() => setShowReminder(false)}>Nanti</button><button className="min-h-[40px] flex-1 rounded-full bg-[#075b2a] text-[16px] text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460]" onClick={() => setShowReminder(false)}>Oke</button></div>
           </div>
         </div>
       )}
@@ -1079,50 +1323,45 @@ function Tasks({ tasks, setTasks, flash, go }) {
 }
 function TaskForm({ close, save }) {
   const [form, setForm] = useState({
-    title: "",
+    title: "Membaca Materi Kuliah Sistem Informasi Keperawatan",
     date: "2026-10-03",
     time: "13:00",
     priority: "Sedang",
     note: "",
   });
   return (
-    <Modal title="Tambah Tugas" close={close}>
+    <div className="fixed inset-0 z-[90] overflow-y-auto bg-white text-[#242424]">
+      <div className="mx-auto min-h-screen w-full max-w-[1120px] pb-24">
+        <header className="relative min-h-[153px] bg-[#d9efdc] bg-[url('/assets/pic/pic-62.png')] bg-cover px-5 pt-2 md:px-12 md:pt-7">
+          <div className="flex items-center gap-5">
+            <button className="grid size-11 place-items-center text-[27px] text-[#73a883] focus-visible:outline-2 focus-visible:outline-[#087460]" type="button" onClick={close} aria-label="Kembali"><Icon icon={faArrowLeft} /></button>
+            <h1 className="text-[18px] font-semibold text-[#174f38] md:text-2xl">Tambah Tugas</h1>
+          </div>
+          <div className="flex items-center md:mt-2">
+            <img className="h-[77px] w-[76px] object-contain md:h-24 md:w-24" src="/assets/pic/pic-17.png" alt="Maskot ReMind" />
+            <p className="text-[18px] font-semibold leading-[22px] text-[#174f38] md:text-2xl">Hai, Ramadhani<br />Septhea Dwi Putri<br /><b className="text-[13px] text-white [text-shadow:0_2px_3px_rgba(34,82,54,.48)] md:text-base">“Yuk, selesaikan tugasmu satu per satu!”</b></p>
+          </div>
+        </header>
       <form
+        className="mx-auto max-w-[760px] space-y-2 px-10 pt-4 md:grid md:grid-cols-2 md:gap-x-8 md:space-y-0"
         onSubmit={(e) => {
           e.preventDefault();
           save(form);
         }}
       >
-        <Field
-          label="Nama Tugas"
-          value={form.title}
-          onChange={(e) => setForm({ ...form, title: e.target.value })}
-          placeholder="Contoh: Membaca materi"
-        />
-        <div className="form-row">
-          <Field
-            label="Tanggal"
-            type="date"
-            value={form.date}
-            onChange={(e) => setForm({ ...form, date: e.target.value })}
-          />
-          <Field
-            label="Waktu"
-            type="time"
-            value={form.time}
-            onChange={(e) => setForm({ ...form, time: e.target.value })}
-          />
-        </div>
-        <div className="field">
-          <span>Prioritas *</span>
-          <div className="priority-pills" role="radiogroup" aria-label="Prioritas">
+        <label className="block md:col-span-2"><span className="ml-1 text-[17px] font-semibold">Nama Tugas *</span><textarea required rows="2" className="mx-auto -mt-1 block h-[64px] w-full max-w-[292px] resize-none rounded-full !border-[3px] !border-black bg-[#78a985] px-5 py-2 text-center text-[14px] font-semibold leading-[19px] text-white outline-none focus-visible:ring-2 focus-visible:ring-[#087460] md:max-w-none" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></label>
+        <label className="block"><span className="ml-1 text-[17px] font-semibold">Tanggal*</span><input className="mx-auto -mt-1 block min-h-[64px] w-full max-w-[292px] rounded-full !border-[3px] !border-black bg-[#78a985] px-6 text-center text-[14px] font-semibold text-white outline-none focus-visible:ring-2 focus-visible:ring-[#087460] md:max-w-none" type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></label>
+        <label className="block"><span className="ml-1 text-[17px] font-semibold">Waktu*</span><input className="mx-auto -mt-1 block min-h-[64px] w-full max-w-[292px] rounded-full !border-[3px] !border-black bg-[#78a985] px-6 text-center text-[14px] font-semibold text-white outline-none focus-visible:ring-2 focus-visible:ring-[#087460] md:max-w-none" type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} /></label>
+        <div className="md:col-span-2">
+          <span className="ml-1 text-[17px] font-semibold">Prioritas *</span>
+          <div className="-mx-7 mt-2 grid grid-cols-3 gap-2 md:mx-0" role="radiogroup" aria-label="Prioritas">
             {["Rendah", "Sedang", "Tinggi"].map((p) => (
               <button
                 key={p}
                 type="button"
                 role="radio"
                 aria-checked={form.priority === p}
-                className={`priority-pill priority-${p.toLowerCase()} ${form.priority === p ? "active" : ""}`}
+                className={`min-h-[25px] rounded-full text-[16px] text-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460] ${p === "Rendah" ? "bg-[#9db49d]" : p === "Sedang" ? "bg-[#edff62]" : "bg-[#e25b55]"} ${form.priority === p ? "ring-2 ring-[#075746] ring-offset-2" : ""}`}
                 onClick={() => setForm({ ...form, priority: p })}
               >
                 {p}
@@ -1130,30 +1369,36 @@ function TaskForm({ close, save }) {
             ))}
           </div>
         </div>
-        <label className="field">
-          <span>Catatan (opsional)</span>
+        <label className="block md:col-span-2">
+          <span className="ml-1 text-[17px] font-semibold">Catatan (opsional)</span>
           <textarea
+            className="mx-auto mt-1 block min-h-[100px] w-full max-w-[282px] resize-none rounded-[8px] !border-[3px] !border-black px-4 py-3 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-[#087460] md:max-w-none"
             value={form.note}
             onChange={(e) => setForm({ ...form, note: e.target.value })}
             placeholder="Tambahkan catatan..."
           />
         </label>
-        <div className="form-actions">
-          <button className="primary" type="submit">
+        <div className="mx-auto mt-3 grid w-[155px] gap-2 md:col-span-2">
+          <button className="flex min-h-[30px] items-center justify-center gap-3 rounded-md bg-[#eff6e8] text-[16px] font-semibold text-[#242424] hover:bg-[#dfead6] focus-visible:outline-2 focus-visible:outline-[#087460]" type="submit">
             <Icon icon={faFloppyDisk} /> Simpan Tugas
           </button>
-          <button className="secondary" type="button" onClick={close}>
+          <button className="flex min-h-[30px] items-center justify-center gap-3 rounded-md bg-[#eff6e8] text-[16px] font-semibold text-[#242424] hover:bg-[#dfead6] focus-visible:outline-2 focus-visible:outline-[#087460]" type="button" onClick={close}>
             <Icon icon={faXmark} /> Batal
           </button>
         </div>
       </form>
-    </Modal>
+      </div>
+    </div>
   );
 }
 function Pomodoro({ go }) {
-  const [mode, setMode] = useState("focus");
   const defaults = { focus: 40 * 60, short: 10 * 60, long: 20 * 60 };
-  const [seconds, setSeconds] = useState(defaults.focus);
+  const localPomodoroPreview = ["127.0.0.1", "localhost"].includes(window.location.hostname)
+    ? new URLSearchParams(window.location.search).get("pomodoroState")
+    : null;
+  const initialMode = localPomodoroPreview === "break" ? "short" : "focus";
+  const [mode, setMode] = useState(initialMode);
+  const [seconds, setSeconds] = useState(localPomodoroPreview === "alarm" ? 0 : defaults[initialMode]);
   const [running, setRunning] = useState(false);
   const [pausedNotice, setPausedNotice] = useState(false);
   const [alarmNotice, setAlarmNotice] = useState("");
@@ -1178,90 +1423,99 @@ function Pomodoro({ go }) {
     setRunning(false);
   };
   const pct = 1 - seconds / defaults[mode];
+  const minutes = String(Math.floor(seconds / 60)).padStart(2, "0");
+  const secondsPart = String(seconds % 60).padStart(2, "0");
+  const hasProgress = running || seconds < defaults[mode];
+  const Notice = ({ children, action = "Oke", onClose }) => (
+    <div className="fixed inset-0 z-[100] grid place-items-center bg-black/10 px-8">
+      <div className="w-full max-w-[320px] rounded-[48px] bg-white px-8 pb-7 pt-9 text-center text-[#285e46] shadow-xl md:max-w-[420px]" role="dialog" aria-modal="true">
+        <span className="mx-auto grid size-[82px] place-items-center rounded-full !border-[13px] !border-[#54ad5c] text-[51px] text-[#6ccc79]"><Icon icon={faCircleCheck} /></span>
+        <p className="mt-6 text-[17px] leading-6">{children}</p>
+        <button className="mt-5 min-h-[36px] rounded-full bg-[#075b2a] px-7 text-[15px] text-white hover:bg-[#06491f] focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#087460]" onClick={onClose}>{action}</button>
+      </div>
+    </div>
+  );
   if (seconds === 0 && mode === "focus")
     return (
-      <section className="alarm-page">
-        <h1>POMODORO - ALARM</h1>
-        <span>
-          <Icon icon={faMusic} /> Berbunyi
+      <section className="relative mx-auto min-h-[calc(100dvh-69px)] w-full max-w-[1120px] overflow-hidden bg-[linear-gradient(110deg,#004827,#58aaa3)] px-5 pb-6 pt-3 text-[#d9efdc] md:min-h-screen md:px-14 md:pt-8">
+        <h1 className="text-[30px] font-medium md:text-4xl">POMODORO - ALARM</h1>
+        <span className="mt-3 inline-flex min-h-[31px] items-center gap-2 rounded-full bg-white/20 px-4 text-[16px]">
+          <Icon icon={faVolumeHigh} /> Berbunyi
         </span>
-        <div className="alarm-rings">
-          <i />
+        <div className="relative mx-auto mt-[70px] grid size-[127px] place-items-center rounded-full bg-[#d5f3dd] shadow-[0_0_0_18px_rgba(184,229,208,.20),0_0_0_36px_rgba(184,229,208,.15),0_0_0_54px_rgba(184,229,208,.10)] md:mt-20 md:size-[180px]">
+          <i className="absolute right-[14px] top-[18px] size-4 rounded-full bg-[#91f5dd]" />
         </div>
-        <strong>+02:23</strong>
-        <h2>
+        <strong className="mt-[67px] block text-center text-[62px] font-medium leading-none text-white md:text-[72px]">+02:23</strong>
+        <h2 className="mt-1 text-center text-[25px] font-semibold leading-8 text-white md:text-3xl">
           Waktu belajar telah
           <br />
           berakhir
         </h2>
-        <p>
+        <p className="mt-2 text-center text-[13px] leading-5 text-[#d5e9df] md:text-base">
           Kamu melewati batas belajar selama 2 menit 23 detik.
           <br />
           Hentikan alarm atau lanjut ke sesi istirahat.
         </p>
-        <div className="alarm-actions">
+        <div className="mx-auto mt-4 w-full max-w-[346px] rounded-[26px] bg-white/15 px-4 pb-4 pt-3 md:max-w-[520px]">
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center border-b border-[#d5e9df] pb-3 text-center text-[14px]"><span><b className="block text-[13px]">SESI SELESAI</b>Belajar • 40 menit</span><Icon icon={faChevronRight} /><span><b className="block text-[13px]">BERIKUTNYA</b>Istirahat • 10 menit</span></div>
           <button
+            className="mt-3 min-h-[49px] w-full rounded-full bg-[#f4faef] text-[17px] text-[#26715c] hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             onClick={() => {
               setSeconds(defaults.focus);
               setRunning(false);
             }}
           >
-            Hentikan alarm
+            <span className="mr-2 inline-block size-6 align-middle !border !border-[#67a798]" /> Hentikan alarm
           </button>
           <button
+            className="mt-3 min-h-[49px] w-full rounded-full !border-2 !border-white bg-transparent text-[17px] text-white hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             onClick={() => {
               choose("short");
               setAlarmNotice("Sesi istirahat berhasil dimulai!");
             }}
           >
-            Mulai sesi istirahat
+            <Icon className="mr-2" icon={faForwardStep} /> Mulai sesi istirahat
           </button>
         </div>
         {alarmNotice && (
-          <div className="pomodoro-notice success-overlay">
-            <div role="dialog" aria-modal="true">
-              <Icon icon={faCircleCheck} />
-              <p>{alarmNotice}</p>
-              <button onClick={() => setAlarmNotice("")}>Kembali ke Pomodoro</button>
-            </div>
-          </div>
+          <Notice action="Kembali ke Pomodoro" onClose={() => setAlarmNotice("")}>{alarmNotice}</Notice>
         )}
       </section>
     );
   return (
-    <>
-      <header className="pomodoro-header">
-        <button onClick={() => go("home")} aria-label="Kembali">
+    <section className="mx-auto min-h-[calc(100dvh-69px)] w-full max-w-[1120px] bg-[#d3edda] px-[22px] pb-5 pt-3 text-[#075746] md:grid md:min-h-screen md:grid-cols-[1fr_0.9fr] md:gap-x-12 md:px-14 md:py-9">
+      <header className="-ml-3 flex items-start gap-1 md:col-span-2 md:ml-0 md:gap-4">
+        <button className="grid size-9 shrink-0 place-items-center text-[27px] text-[#73a883] focus-visible:outline-2 focus-visible:outline-[#087460]" onClick={() => go("home")} aria-label="Kembali">
           <Icon icon={faArrowLeft} />
         </button>
         <div>
-          <h1>POMODORO</h1>
-          <h2>{mode === "focus" ? "Saatnya Belajar" : "Tarik Napas"}</h2>
-          <p>{mode === "focus" ? "Jaga ritme, satu sesi penuh." : "Beristirahat tanpa kehilangan ritme"}</p>
+          <h1 className="text-[29px] font-semibold leading-[30px] md:text-4xl">POMODORO</h1>
+          <h2 className="text-[25px] font-semibold leading-[25px] text-[#138b78] md:text-3xl">{mode === "focus" ? "Saatnya Belajar" : "Tarik Napas"}</h2>
+          <p className="text-[14px] text-[#138b78] md:text-base">{mode === "focus" ? "Jaga ritme, satu sesi penuh." : "Beristirahat tanpa kehilangan ritme"}</p>
         </div>
       </header>
-      <section className="timer-section">
-        <div className="timer" style={{ "--progress": `${pct * 360}deg` }}>
-          <span>
-            {String(Math.floor(seconds / 60)).padStart(2, "0")}:
-            {String(seconds % 60).padStart(2, "0")}
-          </span>
-          <small>{running ? "• Fokus sedang berlangsung" : ""}</small>
+      <div className="md:col-start-1 md:row-span-3">
+        <div className="relative mx-auto mt-4 grid size-[252px] place-items-center rounded-full md:size-[330px]" style={{ background: `conic-gradient(#06492b ${pct * 360}deg, #69baa2 0deg)` }}>
+          <div className="grid size-[239px] place-items-center rounded-full bg-[#d4f4dc] md:size-[313px]">
+            <span className="mt-7 text-[70px] font-medium leading-none md:text-[84px]">{minutes}:{secondsPart}</span>
+            <small className="-mt-12 text-[12px] md:text-sm">{hasProgress ? `• ${mode === "focus" ? "Fokus" : "Istirahat"} sedang berlangsung` : ""}</small>
+          </div>
         </div>
-        <p className="timer-caption">
+        <p className="mx-auto mt-3 max-w-[300px] text-center text-[12px] leading-4 md:text-base md:leading-6">
           {mode === "focus"
             ? "Menyelesaikan membaca materi kuliah Sistem Informasi Keperawatan"
             : "Regangkan bahu dan minum air"}
         </p>
-        <div className="timer-actions">
+        <div className="mx-auto mt-3 grid max-w-[345px] grid-cols-[58px_1fr_58px] items-center gap-4">
           <button
+            className="grid size-[58px] place-items-center rounded-full bg-[#9dd4a6] text-[29px] hover:bg-[#8bc596] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460]"
             onClick={() => setSeconds(defaults[mode])}
             aria-label="Ulangi"
           >
             <Icon icon={faRotateRight} />
           </button>
           <button
-            className="play"
+            className="flex min-h-[55px] items-center justify-center gap-3 rounded-full bg-[#087f6d] text-[20px] text-white hover:bg-[#076d5e] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#075746]"
             onClick={() => {
               if (running) {
                 setRunning(false);
@@ -1284,6 +1538,7 @@ function Pomodoro({ go }) {
                   : "Mulai Istirahat"}
           </button>
           <button
+            className="grid size-[58px] place-items-center rounded-full bg-[#eaf5e7] text-[29px] hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460]"
             onClick={() => {
               const next = mode === "focus" ? "short" : "focus";
               choose(next);
@@ -1293,66 +1548,32 @@ function Pomodoro({ go }) {
             <Icon icon={faForwardStep} />
           </button>
         </div>
-        <div className="session-tabs">
-          <button
-            className={mode === "focus" ? "active" : ""}
-            onClick={() => choose("focus")}
-          >
-            Fokus 40m
-          </button>
-          <button
-            className={mode === "short" ? "active" : ""}
-            onClick={() => choose("short")}
-          >
-            Istirahat 10m
-          </button>
-          <button
-            className={mode === "long" ? "active" : ""}
-            onClick={() => choose("long")}
-          >
-            Istirahat 20m
-          </button>
-        </div>
-        <div className="progress-card">
-          <b>SIKLUS HARI INI</b>
-          <div className="cycle-dots" aria-hidden="true">
+      </div>
+      <div className="mt-6 md:col-start-2 md:row-start-2 md:mt-2">
+        <div className="rounded-[11px] bg-[#f4faef] px-5 py-3">
+          <div className="flex items-center justify-between"><b className="text-[16px] font-medium">SIKLUS HARI INI</b><div className="flex gap-2" aria-hidden="true">
             {[0, 1, 2, 3].map((n) => (
               <i
                 key={n}
-                className={n < (running ? 3 : 0) ? "done" : ""}
+                className={`h-2 w-8 rounded-full !border !border-[#075746] ${n < (hasProgress ? 3 : 0) ? "bg-[#075746]" : "bg-[#9dd4a6]"}`}
               />
             ))}
-          </div>
-          <span>{running ? "3 dari 4 selesai" : "0 dari 4 selesai"}</span>
+          </div></div>
+          <span className="mt-1 block text-[22px] font-semibold">{hasProgress ? "3 dari 4 selesai" : "0 dari 4 selesai"}</span>
         </div>
-        <div className="focus-card">
-          <b>Fokus Hari Ini</b>
-          <div>
-            <strong>
-              {running ? "2j 10m" : "0m"}
-              <small>Waktu fokus</small>
-            </strong>
-            <strong>
-              {running ? "3" : "0"}
-              <small>Sesi selesai</small>
-            </strong>
-            <strong>
-              {running ? "80%" : "0%"}
-              <small>Target harian</small>
-            </strong>
+        <div className="mx-auto flex h-[55px] w-[235px] items-center justify-center overflow-hidden"><img className="h-[68px] w-[105px] object-contain" src="/assets/pic/pic-31.png" alt="" /></div>
+        <div className="rounded-[11px] bg-[#f4faef] px-4 pb-3 pt-4">
+          <div className="flex justify-between"><b className="text-[20px] font-medium">Fokus Hari Ini</b><span className="rounded-full bg-[#c8dfc1] px-3 py-1 text-[14px]">♨ {hasProgress ? "5 hari" : "0 hari"}</span></div>
+          <div className="mt-4 grid grid-cols-3">
+            {[[hasProgress ? "2j 10m" : "0m", "Waktu fokus"], [hasProgress ? "3" : "0", "Sesi selesai"], [hasProgress ? "80%" : "0%", "Target harian"]].map(([value, label]) => <strong className="text-[22px] leading-5" key={label}>{value}<small className="block text-[11px] font-normal text-[#138b78]">{label}</small></strong>)}
           </div>
+          <div className="mt-3 h-[7px] overflow-hidden rounded-full bg-[#9dd4a6]"><i className="block h-full bg-[#087f6d]" style={{ width: hasProgress ? "80%" : "1%" }} /></div>
         </div>
-      </section>
+      </div>
       {pausedNotice && (
-        <div className="pomodoro-notice success-overlay">
-          <div role="dialog" aria-modal="true" aria-label="Sesi dijeda">
-            <Icon icon={faCircleCheck} />
-            <p>Sesi {mode === "focus" ? "belajar" : "istirahat"} telah dijeda</p>
-            <button onClick={() => setPausedNotice(false)}>Oke</button>
-          </div>
-        </div>
+        <Notice onClose={() => setPausedNotice(false)}>Sesi {mode === "focus" ? "belajar" : "istirahat"} telah dijeda</Notice>
       )}
-    </>
+    </section>
   );
 }
 function Mood({ go, persist }) {
@@ -1363,81 +1584,77 @@ function Mood({ go, persist }) {
   const [result, setResult] = useState(false);
   if (result)
     return (
-      <section className="mood-page mood-result-page">
-        <button className="page-back" onClick={() => setResult(false)}>
+      <section className="relative flex min-h-[calc(100svh-74px)] flex-col items-center overflow-hidden bg-[#e6f3e4] px-7 pb-5 pt-5 font-['Poppins'] text-[#174d3f] md:min-h-screen md:px-12 md:py-9">
+        <img src="/assets/pic/pic-62.png" alt="" aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-45" />
+        <button className="relative z-10 flex min-h-11 w-full cursor-pointer items-center gap-3 text-left text-[20px] font-semibold hover:text-[#087460] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460] md:max-w-[760px] md:text-[27px]" onClick={() => setResult(false)}>
           <Icon icon={faArrowLeft} /> Hasil mood tracker
         </button>
-        <div className="mood-result-brand">
-          <img src="/assets/pic/pic-31.png" alt="" />
-          <b>
+        <div className="relative z-10 mt-7 flex min-h-[128px] w-[210px] items-center justify-center gap-2 rounded-[28px] bg-[#d5e4c8]/90 px-5 md:w-[340px]">
+          <img src="/assets/pic/pic-31.png" alt="" className="w-[95px] object-contain md:w-[130px]" />
+          <b className="text-[24px] leading-[1.55] md:text-[32px]">
             Mood
             <br />
             Tracker
           </b>
         </div>
-        <article className="mood-summary-card">
-          <h2>Your mood today</h2>
-          <p>
-            <img src={moodImages[mood]} alt="" /> <span>:</span> <b>{mood}</b>
-          </p>
-          <p>
-            <Icon icon={faBed} /> <span>:</span> <b>{sleep} jam</b>
-          </p>
-          <p>
-            <Icon icon={faBrain} /> <span>:</span>{" "}
-            <b>{stress < 35 ? "Rendah" : stress < 70 ? "Sedang" : "Tinggi"}</b>
-          </p>
+        <article className="relative z-10 mt-[86px] w-full max-w-[262px] rounded-[18px] bg-[#fffdf6] px-6 pb-4 pt-5 shadow-[0_3px_8px_rgba(36,58,48,0.45)] md:mt-10 md:max-w-[540px] md:px-12">
+          <h2 className="absolute -top-7 left-1/2 m-0 w-[208px] -translate-x-1/2 rounded-[22px] bg-[#91b779] py-2 text-center text-[17px] text-white md:w-[300px] md:text-xl">Your mood today</h2>
+          {[
+            [moodOptions.find(([name]) => name === mood)?.[1], mood],
+            [faBed, `${sleep} jam`],
+            [faBrain, stress < 35 ? "Rendah" : stress < 70 ? "Sedang" : "Tinggi"],
+          ].map(([icon, value]) => (
+            <p key={value} className="m-0 grid min-h-[48px] grid-cols-[54px_24px_1fr] items-center text-[20px]">
+              <Icon icon={icon} className="text-[34px] text-[#087460]" /> <span>:</span> <b>{value}</b>
+            </p>
+          ))}
         </article>
-        <article className="mood-note-card">
-          <h2>Note for you</h2>
-          <p>
+        <article className="relative z-10 mt-11 w-full max-w-[330px] rounded-[22px] bg-[#fffdf6] px-4 pb-7 pt-10 shadow-[0_3px_8px_rgba(36,58,48,0.45)] md:max-w-[650px] md:px-10">
+          <h2 className="absolute -top-6 left-1/2 m-0 w-[270px] -translate-x-1/2 rounded-[24px] bg-[#91b779] py-2 text-center text-[22px] text-white md:w-[360px]">Note for you</h2>
+          <p className="m-0 text-justify text-[15px] font-semibold leading-[1.55] md:text-lg">
             Hari ini cukup baik, suasana hati stabil. Tugas kuliah lancar dan
             tidak terlalu banyak pikiran. Semoga besok tetap baik!
           </p>
         </article>
-        <button className="mood-next" onClick={() => go("screening")}>
+        <button className="relative z-10 mt-auto min-h-[32px] w-[218px] cursor-pointer rounded-[18px] bg-[#07816d] px-5 text-[15px] font-semibold text-white hover:bg-[#075f50] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#075746] md:mt-8 md:min-h-11 md:w-[280px] md:text-lg" onClick={() => go("screening")}>
           Next skrining stress ---&gt;
         </button>
       </section>
     );
   return (
-    <section className="mood-page mood-entry-page">
-      <button className="page-back" onClick={() => go("home")}>
+    <section className="relative min-h-[calc(100svh-74px)] overflow-hidden bg-[#e6f3e4] px-3 pb-4 pt-4 font-['Poppins'] text-[#174d3f] md:grid md:min-h-screen md:grid-cols-[0.85fr_1.15fr] md:grid-rows-[auto_auto_1fr_auto] md:gap-x-7 md:px-12 md:py-9">
+      <img src="/assets/pic/pic-62.png" alt="" aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-45" />
+      <button className="relative z-10 flex min-h-11 items-center gap-3 px-4 text-[20px] font-semibold md:col-span-2 md:text-[27px]" onClick={() => go("home")}>
         <Icon icon={faArrowLeft} /> Mood Tracker
       </button>
-      <img className="mood-mascot" src="/assets/pic/pic-26.png" alt="" />
-      <p className="mood-greeting">
+      <img className="relative z-10 mx-auto mt-1 block w-[110px] object-contain md:col-start-1 md:mt-6 md:w-[150px]" src="/assets/pic/pic-26.png" alt="" />
+      <p className="relative z-10 mx-auto -mt-1 w-[338px] rounded-[32px] bg-[#b8d2aa]/80 py-2 text-center text-[14px] leading-[1.35] text-[#174d3f] md:col-start-1 md:row-start-3 md:mt-2 md:w-full md:max-w-[440px] md:text-lg">
         Hai, Ramadhani
         <br />
         Septhea Dwi Putri
         <br />
         <b>Yuk, cek mood kamu hari ini!</b>
       </p>
-      <div className="mood-select-card">
-        <h2>Mood</h2>
-        <div className="mood-pick">
-          {moodOptions.map(([m, , c]) => (
+      <div className="relative z-10 mt-3 rounded-[24px] bg-[#fffdf6] pb-4 pt-8 md:col-start-1 md:row-start-4 md:mt-5 md:px-5 md:pb-7">
+        <h2 className="absolute left-0 top-0 m-0 w-[150px] rounded-[20px] bg-[#91b779] py-1 text-center text-[17px] font-medium text-white">Mood</h2>
+        <div className="grid grid-cols-5 gap-1 px-6 md:gap-3">
+          {moodOptions.map(([m, icon, c]) => (
             <button
               key={m}
               aria-label={m}
-              className={mood === m ? "active" : ""}
-              style={{ "--mood": c }}
+              className={`flex cursor-pointer flex-col items-center gap-1 rounded-xl py-1 text-[11px] transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#087460] ${mood === m ? "bg-[#dcebd2]" : ""}`}
               onClick={() => setMood(m)}
             >
-              <img src={moodImages[m]} width="52" height="52" alt="" />
+              <span className="grid size-[42px] place-items-center rounded-full border-2 border-white text-xl text-[#355f4f] shadow" style={{ backgroundColor: c }}><Icon icon={icon} /></span>
               <span>{m}</span>
             </button>
           ))}
         </div>
       </div>
-      <div className="mood-metrics">
-        <label>
-          <Icon icon={faBed} />
-          <span>
-            Kualitas
-            <br />
-            tidur
-          </span>
+      <div className="relative z-10 mt-9 grid grid-cols-2 gap-3 md:col-start-2 md:row-start-2 md:mt-6 md:gap-5">
+        <label className="grid min-h-[94px] grid-cols-[52px_1fr] items-center rounded-[12px] border border-[#718779] bg-[#fffdf6] px-2 py-2 shadow-[0_2px_5px_rgba(36,58,48,0.35)] md:min-h-[160px] md:p-5">
+          <Icon icon={faBed} className="text-[38px] text-[#087460]" />
+          <span className="text-center text-[13px] font-semibold md:text-lg">Kualitas<br />tidur</span>
           <input
             type="number"
             min="1"
@@ -1445,15 +1662,12 @@ function Mood({ go, persist }) {
             value={sleep}
             onChange={(e) => setSleep(e.target.value)}
             placeholder="Ketik disini jam tidur"
+            className="col-span-2 h-[28px] rounded-[18px] border-0 bg-[#cedebf] px-3 text-[9px] outline-none focus-visible:ring-2 focus-visible:ring-[#087460] md:h-10 md:text-sm"
           />
         </label>
-        <label>
-          <Icon icon={faBrain} />
-          <span>
-            Tingkat beban
-            <br />
-            mental/stres
-          </span>
+        <label className="grid min-h-[94px] grid-cols-[52px_1fr] items-center rounded-[12px] border border-[#718779] bg-[#fffdf6] px-2 py-2 shadow-[0_2px_5px_rgba(36,58,48,0.35)] md:min-h-[160px] md:p-5">
+          <Icon icon={faBrain} className="text-[38px] text-[#087460]" />
+          <span className="text-center text-[11px] font-semibold md:text-lg">Tingkat beban<br />mental/stres</span>
           <input
             type="number"
             min="0"
@@ -1461,24 +1675,22 @@ function Mood({ go, persist }) {
             value={stress}
             onChange={(e) => setStress(e.target.value)}
             placeholder="Ketik disini berapa %"
+            className="col-span-2 h-[28px] rounded-[18px] border-0 bg-[#cedebf] px-3 text-[9px] outline-none focus-visible:ring-2 focus-visible:ring-[#087460] md:h-10 md:text-sm"
           />
         </label>
       </div>
-      <label className="mood-factor">
-        <Icon icon={faListCheck} />
-        <span>
-          Faktor pengaruh
-          <br />
-          mood
-        </span>
+      <label className="relative z-10 mx-auto mt-8 grid min-h-[143px] w-[256px] grid-cols-[72px_1fr] items-center rounded-[18px] border border-[#718779] bg-[#fffdf6] px-4 py-3 shadow-[0_3px_8px_rgba(36,58,48,0.45)] md:col-start-2 md:row-start-3 md:mt-5 md:min-h-[230px] md:w-full md:max-w-[600px] md:p-8">
+        <Icon icon={faListCheck} className="text-[58px] text-[#087460] md:text-[72px]" />
+        <span className="text-center text-[17px] font-semibold md:text-[24px]">Faktor pengaruh<br />mood</span>
         <textarea
           placeholder="Ketik disini"
           value={influences}
           onChange={(event) => setInfluences(event.target.value)}
+          className="col-span-2 min-h-[42px] resize-none rounded-[22px] border-0 bg-[#cedebf] px-5 py-3 text-[11px] outline-none focus-visible:ring-2 focus-visible:ring-[#087460] md:min-h-[90px] md:text-base"
         />
       </label>
       <button
-        className="mood-next"
+        className="relative z-10 ml-auto mt-[44px] block min-h-[30px] w-[187px] cursor-pointer rounded-[18px] bg-[#07816d] px-4 text-[19px] font-semibold text-white hover:bg-[#075f50] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#075746] md:col-start-2 md:row-start-4 md:mt-5 md:min-h-11 md:w-[240px]"
         onClick={() => {
           persist?.({ mood, sleep, stress, influences }).catch(() => {});
           setResult(true);
@@ -1505,109 +1717,116 @@ function Screening({ go, persist }) {
   const [step, setStep] = useState(-1);
   const [ans, setAns] = useState([]);
   const [selected, setSelected] = useState(null);
+  const ScreeningTitle = ({ label }) => (
+    <button
+      className="inline-flex min-h-11 items-center gap-5 text-left text-[23px] font-bold text-[#164d35] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#087460] md:text-[28px]"
+      onClick={() => (label === "Hasil skrining" ? go("mood") : setStep(-1))}
+    >
+      <Icon icon={faArrowLeft} className="text-[27px] text-[#75a984]" />
+      {label}
+    </button>
+  );
   if (step === -1)
     return (
-      <section className="screening-page screening-start">
-        <button className="page-back" onClick={() => go("mood")}>
-          <Icon icon={faArrowLeft} /> Skrining stress
-        </button>
-        <img className="screening-mascot" src="/assets/pic/pic-30.png" alt="" />
-        <p className="screening-greeting">
+      <section className="mx-auto min-h-[calc(100dvh-69px)] w-full max-w-[1120px] bg-[#d3edda] px-5 pb-14 pt-2 text-[#174f38] md:min-h-screen md:px-12 md:py-9">
+        <ScreeningTitle label="Skrining stress" />
+        <div className="mx-auto mt-4 grid max-w-[960px] items-center md:mt-12 md:grid-cols-[0.8fr_1.2fr] md:gap-16">
+          <div className="text-center">
+            <img className="mx-auto w-[110px] md:w-[240px]" src="/assets/pic/pic-30.png" alt="Maskot ReMind" />
+            <p className="mt-1 text-[16px] font-semibold leading-[21px] md:text-[24px] md:leading-8">
           Hai, Ramadhani
           <br />
           Septhea Dwi Putri
           <br />
-          <b>Yuk, cek kondisi mentalmu!</b>
-        </p>
-        <article className="screening-intro-card">
-          <h2>
-            <Icon icon={faListCheck} /> Skrining kesehatan mental menggunakan
-            PHQ-4
-          </h2>
-          <p>
-            Jawab berdasarkan apa yang kamu rasakan selama 2 minggu terakhir.
-          </p>
-          <div>
-            <Icon icon={faCircleCheck} /> PHQ-4 terdiri dari 4 pertanyaan
-            singkat mengenai gejala depresi dan kecemasan.
+              <b className="text-white [text-shadow:0_2px_4px_rgba(31,68,45,.48)]">Yuk, cek kondisi mentalmu!</b>
+            </p>
           </div>
-          <button onClick={() => setStep(0)}>
-            Mulai <Icon icon={faArrowLeft} />
-          </button>
-        </article>
+          <article className="mx-auto mt-3 w-full max-w-[320px] rounded-[43px] bg-[#80aa8b] px-7 pb-[42px] pt-[42px] text-white md:mt-0 md:max-w-[510px] md:px-12 md:py-12">
+            <h2 className="flex items-center gap-3 text-[16px] font-bold leading-6 [text-shadow:0_2px_2px_rgba(0,0,0,.25)] md:text-[22px]">
+              <Icon icon={faListCheck} className="text-[44px]" />
+              Skrining kesehatan mental menggunakan PHQ-4
+            </h2>
+            <p className="mt-5 text-[15px] font-medium leading-[22px] md:text-lg">
+              Jawab berdasarkan apa yang kamu rasakan selama 2 minggu terakhir.
+            </p>
+            <div className="mt-5 flex min-h-[138px] items-start gap-2 bg-[#f4faef] px-2 py-3 text-justify text-[16px] font-semibold leading-6 text-[#174f38] md:min-h-0 md:p-5 md:text-lg">
+              <Icon icon={faCircleCheck} className="mt-0.5 shrink-0 text-[30px] text-[#138b78]" />
+              <span>PHQ-4 terdiri dari 4 pertanyaan singkat mengenai gejala depresi dan kecemasan.</span>
+            </div>
+            <button className="mt-11 flex min-h-[45px] w-full items-center justify-center gap-5 rounded-full bg-[#138b78] text-[24px] font-bold text-white shadow-[6px_7px_0_#9abb70] hover:bg-[#087460] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white md:mt-8" onClick={() => setStep(0)}>
+              Mulai <Icon icon={faChevronRight} />
+            </button>
+          </article>
+        </div>
       </section>
     );
   if (step === 4) {
     const dep = ans[0] + ans[1],
       anx = ans[2] + ans[3];
     return (
-      <section className="screening-page screening-result">
-        <button className="page-back" onClick={() => go("mood")}>
-          <Icon icon={faArrowLeft} /> Hasil skrining
-        </button>
-        <img className="screening-mascot" src="/assets/pic/pic-30.png" alt="" />
-        <h1>Hasil skrining</h1>
-        <div className="result-scores">
-          <article>
-            <img src="/assets/mood-sad-circle.png" alt="" />
-            <span>
+      <section className="mx-auto min-h-[calc(100dvh-69px)] w-full max-w-[1120px] bg-[#d3edda] px-6 pb-14 pt-2 text-[#174f38] md:min-h-screen md:px-12 md:py-9">
+        <ScreeningTitle label="Hasil skrining" />
+        <img className="mx-auto mt-5 w-[128px] md:mt-0 md:w-[180px]" src="/assets/pic/pic-30.png" alt="Maskot ReMind" />
+        <h1 className="-mt-1 text-center text-[28px] font-bold text-white [text-shadow:0_3px_5px_rgba(28,73,50,.55)] md:text-4xl">Hasil skrining</h1>
+        <div className="mx-auto mt-9 grid max-w-[340px] grid-cols-2 gap-6 md:max-w-[620px] md:gap-10">
+          <article className="flex min-h-[158px] flex-col items-center justify-center rounded-[38px] bg-[#f4faef] text-center">
+            <Icon icon={faFaceSadTear} className="text-[47px] text-[#e5b04d]" aria-hidden="true" />
+            <span className="mt-1 text-[15px] leading-5">
               Depresi
               <br />
               PHQ-2
             </span>
-            <b>{dep}/6</b>
+            <b className="mt-1 rounded-xl bg-[#d7f1ef] px-4 text-[37px] leading-[48px] text-[#087f6d]">{dep}/6</b>
           </article>
-          <article>
-            <img src="/assets/mood-stressed-circle.png" alt="" />
-            <span>
+          <article className="flex min-h-[158px] flex-col items-center justify-center rounded-[38px] bg-[#e2c3ef] text-center">
+            <Icon icon={faBrain} className="text-[47px] text-[#d46fb8]" aria-hidden="true" />
+            <span className="mt-1 text-[15px] leading-5">
               Kecemasan
               <br />
               GAD-2
             </span>
-            <b>{anx}/6</b>
+            <b className="mt-1 rounded-xl bg-[#e58ae8] px-4 text-[37px] leading-[48px] text-[#087f6d]">{anx}/6</b>
           </article>
         </div>
-        <p className="screening-disclaimer">
-          <Icon icon={faCircleCheck} /> Penting untuk diketahui hasil ini
-          merupakan skrining awal dan bukan diagnosis. Jika hasil skrining
-          membuatmu khawatir atau kamu merasa kondisi ini mengganggu aktivitas
-          sehari-hari, pertimbangkan untuk berbicara dengan tenaga kesehatan
-          atau orang yang kamu percaya.
+        <p className="mx-auto mt-6 flex max-w-[590px] items-start gap-3 rounded-[27px] bg-[#f4faef] px-3 py-4 text-justify text-[12px] font-medium leading-[15px] md:px-6 md:text-base md:leading-6">
+          <Icon icon={faCircleCheck} className="mt-0.5 shrink-0 text-[16px] text-[#138b78]" />
+          <span>Penting untuk diketahui hasil ini merupakan skrining awal dan bukan diagnosis. Jika hasil skrining membuatmu khawatir atau kamu merasa kondisi ini mengganggu aktivitas sehari-hari, pertimbangkan untuk berbicara dengan tenaga kesehatan atau orang yang kamu percaya.</span>
         </p>
-        <button className="screening-home" onClick={() => go("home")}>
+        <button className="mx-auto mt-5 flex min-h-[47px] w-full max-w-[230px] items-center justify-center gap-2 rounded-full bg-[#9cc17e] text-[17px] font-bold text-white [text-shadow:0_2px_2px_rgba(0,0,0,.28)] hover:bg-[#87ad69] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#087460] md:max-w-[300px] md:text-xl" onClick={() => go("home")}>
           <Icon icon={faHouse} /> Kembali ke beranda
         </button>
       </section>
     );
   }
   return (
-    <section className="screening-page screening-question-page">
-      <div className="screening-progress">
-        <b>{step + 1}/4</b>
-        <span>
-          <i style={{ width: `${(step + 1) * 25}%` }} />
+    <section className="mx-auto min-h-[calc(100dvh-69px)] w-full max-w-[1120px] bg-[#d3edda] px-6 pb-8 pt-2 text-[#174f38] md:min-h-screen md:px-12 md:py-9">
+      {step > 0 && <ScreeningTitle label="Skrining stress" />}
+      <div className={`mx-auto flex max-w-[300px] items-center gap-3 md:max-w-[520px] ${step === 0 ? "mt-[76px]" : "mt-[43px] md:mt-8"}`}>
+        <b className="shrink-0 text-[24px] md:text-[28px]">{step + 1}/4</b>
+        <span className="h-[27px] flex-1 rounded-full border-2 border-[#8dbb99] p-[3px]">
+          <i className="block h-full rounded-full bg-[#76a985] transition-[width]" style={{ width: `${(step + 1) * 25}%` }} />
         </span>
       </div>
-      <img className="screening-mascot" src="/assets/pic/pic-30.png" alt="" />
-      <article className="screening-question-card">
-        <p>
+      <img className="mx-auto -mt-3 w-[130px] md:mt-1 md:w-[180px]" src="/assets/pic/pic-30.png" alt="Maskot ReMind" />
+      <article className="mx-auto mt-6 w-full max-w-[324px] rounded-[27px] bg-[#f4faef] px-[15px] pb-[18px] pt-[15px] md:max-w-[620px] md:px-8 md:py-7">
+        <p className="text-[16px] font-semibold leading-6 text-[#07816d] md:text-xl md:leading-8">
           Selama 2 minggu terakhir, seberapa sering kamu mengalami masalah
-          berikut? <b>{qs[step]}</b>
+          berikut? <b className="font-semibold">{qs[step]}</b>
         </p>
-        <div>
+        <div className="mt-5 space-y-[22px] md:grid md:grid-cols-2 md:gap-5 md:space-y-0">
           {opts.map((o, i) => (
             <button
-              className={selected === i ? "selected" : ""}
+              className={`flex min-h-[50px] w-full items-center rounded-full !border-[4px] px-3 text-left text-[17px] font-medium leading-5 transition-colors focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#087460] ${selected === i ? "!border-[#087f6d] bg-[#d9ebd2]" : "!border-[#9aaa7c] bg-transparent hover:bg-[#e6efdf]"}`}
               key={o}
               onClick={() => setSelected(i)}
             >
-              <i />
+              <i className={`mr-1 h-4 w-4 shrink-0 rounded-full !border !border-[#62a17f] ${selected === i ? "bg-[#087f6d] shadow-[inset_0_0_0_3px_#f4faef]" : ""}`} />
               {o}
             </button>
           ))}
         </div>
         <button
-          className="screening-next"
+          className="mx-auto mt-[37px] flex min-h-[47px] w-[230px] items-center justify-center gap-5 rounded-full bg-[#9cc17e] text-[19px] font-bold text-white [text-shadow:0_2px_2px_rgba(0,0,0,.3)] enabled:hover:bg-[#87ad69] disabled:cursor-not-allowed disabled:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#087460] md:mt-8"
           disabled={selected === null}
           onClick={() => {
             const nextAnswers = [...ans, selected];
@@ -1617,7 +1836,7 @@ function Screening({ go, persist }) {
             setStep(step + 1);
           }}
         >
-          Lanjut <Icon icon={faArrowLeft} />
+          {step === 3 ? "Lihat hasil" : "Lanjut"} <Icon icon={faChevronRight} />
         </button>
       </article>
     </section>
@@ -1771,7 +1990,7 @@ function SOS({ go }) {
           </span>
         </article>
         <article className="hold-card">
-          <img src="/assets/hold-flower.png" alt="" aria-hidden="true" />
+          <img src="/assets/pic/pic-38.png" alt="" aria-hidden="true" />
           <span>
             <b>Hold on Tight.</b>
             <small>Kami sedang dalam perjalanan menuju kamu &lt;3</small>
@@ -1924,13 +2143,13 @@ function SOS({ go }) {
           </button>
           <img
             className="sos-corner sos-corner-leaf"
-            src="/assets/corner-leaf.png"
+            src="/assets/pic/pic-19.png"
             alt=""
             aria-hidden="true"
           />
           <img
             className="sos-corner sos-corner-flower"
-            src="/assets/corner-flower.png"
+            src="/assets/pic/pic-22.png"
             alt=""
             aria-hidden="true"
           />
@@ -1964,11 +2183,11 @@ function Playlist({ go }) {
     return () => clearInterval(timer);
   }, [playing]);
   const covers = [
-    "/assets/album-blue.png",
-    "/assets/album-red.png",
-    "/assets/album-pink.png",
-    "/assets/album-city.png",
-    "/assets/album-yellow.png",
+    "/assets/pic/pic-47.png",
+    "/assets/pic/pic-48.png",
+    "/assets/pic/pic-49.png",
+    "/assets/pic/pic-50.png",
+    "/assets/pic/pic-51.png",
   ];
   return (
     <section className="playlist-page">
@@ -1980,7 +2199,7 @@ function Playlist({ go }) {
       </header>
       <img
         className="playlist-cover"
-        src="/assets/forest.png"
+        src="/assets/pic/pic-46.png"
         alt="Pemandangan pepohonan dari jendela"
       />
       <div className="playlist-copy">
@@ -2017,7 +2236,7 @@ function Playlist({ go }) {
       </div>
       <div className="mini-player">
         <img
-          src={playing > 0 ? covers[playing - 1] : "/assets/album-art.png"}
+          src={playing > 0 ? covers[playing - 1] : "/assets/pic/pic-49.png"}
           alt=""
         />
         <div>
@@ -2173,7 +2392,7 @@ function Education({ go }) {
             jurnal.
           </p>
         </div>
-        <img src="/assets/plant-pot-canva.png" alt="" />
+        <img src="/assets/pic/pic-67.png" alt="" />
       </section>
       <div className="education-stats">
         <span>
@@ -2436,55 +2655,51 @@ function Profile({ user, setUser, logout, go, persist }) {
       </section>
     );
   return (
-    <>
-      <section className="profile-hero">
-        <div className="avatar">
+    <div className="min-h-[calc(100svh-74px)] bg-[#cde9d3] font-['Poppins'] text-[#174d3f] md:grid md:min-h-screen md:grid-cols-[minmax(400px,0.9fr)_minmax(500px,1.1fr)] md:gap-7 md:bg-[#eef5ec] md:p-8">
+      <section className="relative overflow-hidden rounded-b-[58px] bg-[#a9cbb0] px-9 pb-7 pt-4 md:rounded-[32px] md:px-12 md:py-10 md:shadow-[0_18px_45px_rgba(22,84,67,0.12)]">
+        <img src="/assets/pic/pic-61.png" width="818" height="276" alt="" aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[86px] w-full object-cover md:h-[120px]" />
+        <button className="absolute right-4 top-4 z-10 grid size-12 cursor-pointer place-items-center rounded-full bg-[#087460] text-2xl text-white hover:bg-[#075746] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white" onClick={() => setEditing(true)} aria-label="Pengaturan profil">
+          <Icon icon={faGear} />
+        </button>
+        <div className="relative z-10 mx-auto mt-0 grid size-[76px] place-items-center rounded-full border-[5px] border-white bg-[#087460] text-[38px] text-white md:mt-5 md:size-28 md:text-[54px]">
           <Icon icon={faUser} />
         </div>
-        <h1>{user.name}</h1>
-        <p>
-          {user.age} · {user.gender}
-        </p>
-        <button className="manage-profile" onClick={() => setEditing(true)}>
+        <h1 className="mb-0 mt-2 text-center text-[16px] font-semibold md:text-[25px]">{user.name}</h1>
+        <p className="m-0 text-center text-[12px] font-semibold md:text-base">{user.age} · {user.gender}</p>
+        <button className="mx-auto mt-1 flex min-h-[36px] w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] bg-[#f6f8eb] px-5 text-[16px] font-semibold hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460] md:mt-3 md:max-w-[420px]" onClick={() => setEditing(true)}>
           <Icon icon={faUser} /> Kelola Profil
         </button>
-        <div className="trusted-contacts">
-          <h2>Keluarga &amp; Teman</h2>
+        <div className="mx-auto mt-1 max-w-[440px] md:mt-3">
+          <h2 className="mb-1 mt-0 text-[18px] font-semibold">Keluarga &amp; Teman</h2>
           {[1, 2, 3].map((item) => (
-            <button key={item} onClick={() => go("contacts")}>
-              <Icon icon={faUser} /> Tambah Kontak Baru
+            <button className="flex min-h-[38px] w-full cursor-pointer items-center gap-2 text-left text-[15px] font-medium hover:text-[#087460] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#087460] md:min-h-[42px]" key={item} onClick={() => go("contacts")}>
+              <span className="grid size-9 place-items-center rounded-full bg-[#2f7558] text-white"><Icon icon={faUser} /></span>
+              Tambah Kontak Baru
             </button>
           ))}
         </div>
+        <Icon icon={faChevronRight} className="absolute bottom-1 left-1/2 rotate-90 text-2xl" aria-hidden="true" />
       </section>
-      <section className="section profile-list">
-        <blockquote>
+      <section className="mx-3 my-3 overflow-hidden rounded-[54px] bg-[#7fac8b] px-0 pb-2 pt-4 md:m-0 md:rounded-[32px] md:px-4 md:py-6 md:shadow-[0_18px_45px_rgba(22,84,67,0.12)]">
+        <blockquote className="mx-4 mb-4 mt-0 text-center font-['Playfair_Display'] text-[14px] font-bold text-[#fff36e] md:text-xl">
           “Jangan bandingkan dirimu dengan orang lain, jadilah versi terbaik
           dari dirimu sendiri!”
         </blockquote>
-        <button onClick={() => go("education")}>
-          <img src="/assets/pic/pic-14.png" alt="" />
-          <span>
-            <b>Riwayat Pembelajaran</b>
-            <small>Apa saja yang sudah kamu pelajari?</small>
-          </span>
-        </button>
-        <button onClick={() => go("tasks")}>
-          <img src="/assets/pic/pic-15.png" alt="" />
-          <span>
-            <b>Checklist Tugas</b>
-            <small>Lihat tugas-tugas yang sudah kamu kerjakan</small>
-          </span>
-        </button>
-        <button onClick={() => go("mood")}>
-          <img src="/assets/pic/pic-16.png" alt="" />
-          <span>
-            <b>Mood Tracker</b>
-            <small>Bagaimana mood kamu hari ini?</small>
-          </span>
-        </button>
+        {[
+          ["education", "/assets/pic/pic-14.png", "Riwayat Pembelajaran", "Apa saja yang sudah kamu pelajari?"],
+          ["tasks", "/assets/pic/pic-15.png", "Checklist Tugas", "Lihat tugas-tugas yang sudah kamu kerjakan"],
+          ["mood", "/assets/pic/pic-16.png", "Mood Tracker", "Bagaimana mood kamu hari ini?"],
+        ].map(([target, image, title, copy]) => (
+          <button key={target} className="grid min-h-[92px] w-full cursor-pointer grid-cols-[76px_1fr] items-center gap-2 border-t-[3px] border-dashed border-[#b9d8c2] px-5 text-left transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-white md:min-h-[145px] md:grid-cols-[110px_1fr] md:px-8" onClick={() => go(target)}>
+            <img src={image} alt="" className="size-[72px] object-contain md:size-[105px]" />
+            <span className="grid">
+              <b className="text-[18px] font-medium md:text-[25px]">{title}</b>
+              <small className="text-[11px] md:text-[15px]">{copy}</small>
+            </span>
+          </button>
+        ))}
       </section>
-    </>
+    </div>
   );
 }
 function Modal({ title, close, children }) {
