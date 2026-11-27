@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { FontAwesomeIcon as Icon } from "@fortawesome/react-fontawesome";
 import {
   faHouse,
@@ -21,10 +21,6 @@ import {
   faPause,
   faRotateRight,
   faBed,
-  faFaceSmile,
-  faFaceMeh,
-  faFaceSadTear,
-  faFaceAngry,
   faTriangleExclamation,
   faWind,
   faLocationDot,
@@ -39,6 +35,11 @@ import {
   faGear,
   faBell,
   faVolumeHigh,
+  faFilter,
+  faHeart,
+  faBookmark,
+  faPhoneSlash,
+  faCalendarDays,
 } from "@fortawesome/free-solid-svg-icons";
 import { faGoogle, faFacebook } from "@fortawesome/free-brands-svg-icons";
 import {
@@ -67,18 +68,18 @@ const nav = [
   ["profile", "Profile", faUser],
 ];
 const moodOptions = [
-  ["Happy", faFaceSmile, "#f2c94c"],
-  ["Okay", faFaceMeh, "#82c6b3"],
-  ["Sad", faFaceSadTear, "#62a5c3"],
-  ["Stressed", faBrain, "#be8bc6"],
-  ["Angry", faFaceAngry, "#ef8c83"],
+  ["Happy", "/assets/mood-happy-circle.png"],
+  ["Okay", "/assets/mood-okay-circle.png"],
+  ["Sad", "/assets/mood-sad-circle.png"],
+  ["Stressed", "/assets/mood-stressed-circle.png"],
+  ["Angry", "/assets/mood-angry-circle.png"],
 ];
 const moodImages = {
-  Happy: "/assets/pic/pic-27.png",
-  Okay: "/assets/pic/pic-27.png",
-  Sad: "/assets/pic/pic-27.png",
-  Stressed: "/assets/pic/pic-27.png",
-  Angry: "/assets/pic/pic-27.png",
+  Happy: "/assets/mood-happy-circle.png",
+  Okay: "/assets/mood-okay-circle.png",
+  Sad: "/assets/mood-sad-circle.png",
+  Stressed: "/assets/mood-stressed-circle.png",
+  Angry: "/assets/mood-angry-circle.png",
 };
 const education = [
   {
@@ -184,7 +185,7 @@ const initialTasks = [
     title: "Membaca Materi Kuliah Sistem Informasi Keperawatan",
     date: "2026-10-03",
     time: "13:00",
-    priority: "Sedang",
+    priority: "Tinggi",
     note: "",
     done: true,
   },
@@ -202,15 +203,29 @@ const initialContacts = [
   { name: "Natasha", phone: "+62 822 3226 5433", relation: "Keluarga" },
   { name: "Jeno", phone: "+62 134 4532 6117", relation: "Teman" },
   { name: "Carmen", phone: "+62 822 5344 7129", relation: "Teman" },
+  { name: "Keunho", phone: "+62 822 8334 5627", relation: "Teman" },
 ];
 const songs = [
-  ["u + me = <3", "Hearts2Hearts", "3:30"],
-  ["Rude", "Olivia Rodrigo", "3:11"],
-  ["Begin Again", "Taylor Swift", "4:10"],
-  ["Sunny day", "Beabadoobee", "3:58"],
-  ["Wonderwall", "Oasis", "3:11"],
-  ["Just the way you are", "Bruno Mars", "3:40"],
+  ["u + me = <3", "Hearts2Hearts", "3:11"],
+  ["Rude", "Olivia Rodrigo", "3:30"],
+  ["Begin Again", "Taylor Swift", "3:11"],
+  ["Sunny day", "Beabadoobee", "4:10"],
+  ["Wonderwall", "Oasis", "3:58"],
+  ["Just the way you are", "Bruno Mars", "3:11"],
 ];
+function nameFromUser(user, fallback = "") {
+  const meta = user?.user_metadata || {};
+  return (
+    meta.full_name ||
+    meta.name ||
+    (user?.email ? user.email.split("@")[0] : "") ||
+    fallback
+  );
+}
+function splitName(name = "") {
+  const parts = String(name).trim().split(/\s+/);
+  return { first: parts[0] || "", rest: parts.slice(1).join(" ") || "" };
+}
 
 function App() {
   const [screen, setScreen] = useState(() => {
@@ -248,6 +263,7 @@ function App() {
     age: "18 Tahun",
     gender: "Perempuan",
     phone: "+62 456 3917 2008",
+    avatar: "",
     about:
       "Saya suka mendengarkan musik, menonton video, dan menyukai warna pink.",
   });
@@ -281,12 +297,24 @@ function App() {
           const profile = workspace.profile;
           setUser((current) => ({
             ...current,
-            name: profile.full_name || current.name,
+            name: profile.full_name || nameFromUser(nextSession.user, current.name),
             email: nextSession.user.email || current.email,
             age: profile.age ? `${profile.age} Tahun` : current.age,
             gender: profile.gender || current.gender,
             phone: profile.phone || current.phone,
+            avatar:
+              profile.avatar_url ||
+              nextSession.user.user_metadata?.avatar_url ||
+              current.avatar,
             about: profile.about || current.about,
+          }));
+        } else {
+          setUser((current) => ({
+            ...current,
+            name: nameFromUser(nextSession.user, current.name),
+            email: nextSession.user.email || current.email,
+            avatar:
+              nextSession.user.user_metadata?.avatar_url || current.avatar,
           }));
         }
         if (workspace.tasks.length) {
@@ -329,7 +357,15 @@ function App() {
     };
   }, []);
   const enter = (nextSession = null) => {
-    if (nextSession) setSession(nextSession);
+    if (nextSession) {
+      setSession(nextSession);
+      setUser((current) => ({
+        ...current,
+        name: nameFromUser(nextSession.user, current.name),
+        email: nextSession.user.email || current.email,
+        avatar: nextSession.user.user_metadata?.avatar_url || current.avatar,
+      }));
+    }
     localStorage.setItem("remind-entered", "1");
     setScreen("home");
   };
@@ -367,25 +403,28 @@ function App() {
         setTasks={updateTasks}
         flash={flash}
         go={setScreen}
+        user={user}
       />
     ) : screen === "pomodoro" ? (
       <Pomodoro go={setScreen} />
     ) : screen === "mood" ? (
       <Mood
         go={setScreen}
+        user={user}
         persist={(entry) => saveMood(session?.user?.id, entry)}
       />
     ) : screen === "screening" ? (
       <Screening
         go={setScreen}
+        user={user}
         persist={(answers) => saveScreening(session?.user?.id, answers)}
       />
     ) : screen === "sos" ? (
-      <SOS go={setScreen} />
+      <SOS go={setScreen} contacts={contacts} tasks={tasks} />
     ) : screen === "playlist" ? (
       <Playlist go={setScreen} />
     ) : screen === "education" ? (
-      <Education go={setScreen} />
+      <Education go={setScreen} tasks={tasks} />
     ) : screen === "contacts" ? (
       <Contacts
         go={setScreen}
@@ -405,9 +444,9 @@ function App() {
     ) : null;
   if (!authReady)
     return (
-      <main className="app-loading">
-        <img src="/assets/pic/pic-2.png" alt="ReMind" />
-        <span>Memuat ruangmu…</span>
+      <main className="grid min-h-[100dvh] place-content-center justify-items-center gap-3 bg-[#e7f2df] font-['Poppins'] text-[#1d654f]">
+        <img src="/assets/pic/pic-2.png" alt="ReMind" width="838" height="518" className="size-[92px] object-contain" />
+        <span className="text-xs font-semibold">Memuat ruangmu…</span>
       </main>
     );
   if (screen === "onboarding")
@@ -422,17 +461,20 @@ function App() {
   if (screen === "welcome" || screen === "login" || screen === "signup")
     return <Auth screen={screen} setScreen={setScreen} enter={enter} />;
   return (
-    <div className="min-h-[100svh] bg-[#edf4ed] md:flex">
+    <div className="min-h-[100svh] bg-[#edf4ed] lg:flex">
       <main
         id="main"
-        className="min-h-[100svh] min-w-0 flex-1 overflow-x-hidden pb-[74px] md:pb-0"
+        className="min-h-[100svh] min-w-0 flex-1 overflow-x-hidden pb-[74px] lg:pb-0"
       >
         {content}
       </main>
       <BottomNav current={screen} go={setScreen} />
       {toast && (
-        <div className="toast" role="status">
-          <Icon icon={faCircleCheck} />
+        <div
+          className="fixed left-1/2 top-5 z-[80] flex w-[min(calc(100%-2rem),430px)] -translate-x-1/2 items-center gap-2.5 rounded-[14px] border border-[#8fc0aa] bg-white px-4 py-3.5 font-['Poppins'] text-sm text-[#195240] shadow-[0_10px_30px_#153b2d35]"
+          role="status"
+        >
+          <Icon icon={faCircleCheck} className="shrink-0 text-[#0f6b58]" />
           {toast}
         </div>
       )}
@@ -513,6 +555,7 @@ function Auth({ screen, setScreen, enter }) {
   const [showReset, setShowReset] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [resetMessage, setResetMessage] = useState("");
   const submitAuth = async (event) => {
     event.preventDefault();
     setMessage("");
@@ -684,7 +727,10 @@ function Auth({ screen, setScreen, enter }) {
               <button
                 type="button"
                 className="-mt-3 ml-auto block min-h-11 cursor-pointer px-1 text-[13px] font-medium hover:text-[#087460] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460]"
-                onClick={() => setShowReset(true)}
+                onClick={() => {
+                  setResetMessage("");
+                  setShowReset(true);
+                }}
               >
                 Forgot Password
               </button>
@@ -695,7 +741,7 @@ function Auth({ screen, setScreen, enter }) {
               </p>
             )}
             <button
-              className={`min-h-[46px] w-full cursor-pointer rounded-[28px] bg-[#118773] px-6 text-[17px] font-semibold text-white transition-colors hover:bg-[#087460] active:bg-[#075746] disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460] ${isLogin ? "!mt-2" : ""}`}
+              className={`min-h-[46px] w-full cursor-pointer rounded-[28px] bg-[#0f6b58] px-6 text-[17px] font-semibold text-white transition-colors hover:bg-[#0b5748] active:bg-[#075746] disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460] ${isLogin ? "!mt-2" : ""}`}
               type="submit"
               disabled={busy}
             >
@@ -765,7 +811,7 @@ function Auth({ screen, setScreen, enter }) {
       {showReset && (
         <Modal title="Reset Password" close={() => setShowReset(false)}>
           <form
-            className="reset-form"
+            className="text-center"
             onSubmit={async (event) => {
               event.preventDefault();
               const form = new FormData(event.currentTarget);
@@ -773,45 +819,63 @@ function Auth({ screen, setScreen, enter }) {
               const pw = String(form.get("resetPassword") || "");
               const confirm = String(form.get("resetConfirm") || "");
               if (pw && pw !== confirm) {
-                setMessage("Konfirmasi password belum sama.");
+                setResetMessage("Konfirmasi password belum sama.");
                 return;
               }
               try {
                 if (hasSupabase) await resetPassword(email);
-                setMessage("Tautan reset password telah dikirim ke emailmu.");
+                setResetMessage("Tautan reset password telah dikirim ke emailmu.");
                 setShowReset(false);
               } catch (error) {
-                setMessage(error.message || "Gagal mengirim tautan reset.");
+                setResetMessage(error.message || "Gagal mengirim tautan reset.");
               }
             }}
           >
-            <div className="reset-lock" aria-hidden="true">
+            <div
+              className="mx-auto mb-2.5 grid size-12 place-items-center rounded-xl bg-[#e3efe6] text-2xl text-[#07513f]"
+              aria-hidden="true"
+            >
               <Icon icon={faLock} />
             </div>
-            <p>Enter your email to reset your password.</p>
-            <Field
-              name="resetEmail"
-              label="Email Address"
-              type="email"
-              placeholder="xxxxxxxx@gmail.com"
-              icon={faEnvelope}
-            />
-            <Field
-              name="resetPassword"
-              label="Password baru"
-              type="password"
-              placeholder="Password baru"
-              icon={faLock}
-            />
-            <Field
-              name="resetConfirm"
-              label="Konfirmasi password"
-              type="password"
-              placeholder="Confirm Password"
-              icon={faLock}
-            />
-            <button className="primary" type="submit">
-              Reset Password
+            <p className="mb-3 text-sm leading-6 text-[#4d6a5f]">
+              Masukkan email akunmu untuk menerima tautan reset password.
+            </p>
+            <div className="space-y-3 text-left">
+              <Field
+                name="resetEmail"
+                label="Email Address"
+                type="email"
+                placeholder="xxxxxxxx@gmail.com"
+                icon={faEnvelope}
+              />
+              <Field
+                name="resetPassword"
+                label="Password baru"
+                type="password"
+                placeholder="Password baru"
+                icon={faLock}
+              />
+              <Field
+                name="resetConfirm"
+                label="Konfirmasi password"
+                type="password"
+                placeholder="Konfirmasi password"
+                icon={faLock}
+              />
+            </div>
+            {resetMessage && (
+              <p
+                className="mb-3 mt-4 rounded-xl bg-[#f8dbe1] px-4 py-3 text-center text-xs font-semibold text-[#8c3e4d]"
+                role="status"
+              >
+                {resetMessage}
+              </p>
+            )}
+            <button
+              className="mt-5 min-h-[46px] w-full cursor-pointer rounded-full bg-[#0f6b58] px-6 text-base font-semibold text-white transition-colors hover:bg-[#0b5748] active:bg-[#075746] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460]"
+              type="submit"
+            >
+              Kirim tautan reset
             </button>
           </form>
         </Modal>
@@ -838,35 +902,139 @@ function AuthField({ label, icon, ...props }) {
     </label>
   );
 }
-function Field({ label, icon, ...props }) {
-  const id = label.toLowerCase().replace(/\s/g, "-");
+function Field({ label, icon, className = "", inputClassName = "", ...props }) {
+  const id = useId();
   return (
-    <label className={icon ? "field has-icon" : "field"} htmlFor={id}>
-      <span>{label}</span>
-      {icon && <Icon icon={icon} className="field-glyph" aria-hidden="true" />}
-      <input id={id} required {...props} />
+    <label className={`block ${className}`} htmlFor={id}>
+      <span className="mb-1.5 ml-1 block text-[11px] font-bold uppercase tracking-wide text-[#365e53]">
+        {label}
+      </span>
+      <span className="relative block">
+        {icon && (
+          <Icon
+            icon={icon}
+            aria-hidden="true"
+            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[15px] text-[#5f8577]"
+          />
+        )}
+        <input
+          id={id}
+          required
+          className={`min-h-[46px] w-full rounded-xl border border-[#9fbeae] bg-[#f2f7ef] px-3.5 py-2.5 text-[15px] text-[#173d35] outline-none transition-colors placeholder:text-[#6f8d83] focus-visible:border-[#0f6b58] focus-visible:ring-2 focus-visible:ring-[#0f6b58]/35 ${icon ? "pl-11" : ""} ${inputClassName}`}
+          {...props}
+        />
+      </span>
     </label>
   );
 }
-function BrainMascot({ small = false, flex = false }) {
-  const src = flex ? "/assets/pic/pic-58.png" : "/assets/pic/pic-57.png";
-  const cls = `brain brain-img${small ? " small" : ""}${flex ? " flex" : ""}`;
-  return <img className={cls} src={src} alt="" aria-hidden="true" />;
-}
-function _OldBrainMascot({ small = false }) {
+function NotificationBell({ tasks = [], go, variant = "badge", className = "" }) {
+  const [open, setOpen] = useState(false);
+  const [read, setRead] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("remind-read-notifications") || "[]");
+    } catch {
+      return [];
+    }
+  });
+  const pendingTasks = tasks.filter((task) => !task.done).slice(0, 3);
+  const notifications = [
+    ...pendingTasks.map((task) => ({
+      id: `task-${task.id}`,
+      title: "Tugas menunggu",
+      text: task.title,
+      target: "tasks",
+    })),
+    {
+      id: `mood-${new Date().toDateString()}`,
+      title: "Cek mood harian",
+      text: "Luangkan satu menit untuk mencatat mood dan beban pikiranmu hari ini.",
+      target: "mood",
+    },
+    {
+      id: "support",
+      title: "Dukungan selalu tersedia",
+      text: "Kamu bisa membuka SOS dan menghubungi kontak darurat kapan saja.",
+      target: "sos",
+    },
+  ];
+  const unread = notifications.filter((item) => !read.includes(item.id)).length;
+  const markRead = (ids) => {
+    const next = Array.from(new Set([...read, ...ids]));
+    setRead(next);
+    localStorage.setItem("remind-read-notifications", JSON.stringify(next));
+  };
+  const buttonTone =
+    variant === "plain"
+      ? "text-white hover:bg-white/15"
+      : variant === "ghost"
+        ? "text-[#174d3f] hover:bg-white/50"
+        : "bg-white text-[#174d3f] hover:bg-[#eef6e7]";
   return (
-    <div className={"brain " + (small ? "small" : "")} aria-hidden="true">
-      <img src="/assets/pic/pic-57.png" width="250" height="258" alt="" />
-    </div>
+    <>
+      <button
+        type="button"
+        onClick={() => {
+          setOpen(true);
+          markRead(notifications.map((item) => item.id));
+        }}
+        aria-label={unread ? `Notifikasi, ${unread} belum dibaca` : "Notifikasi"}
+        className={`relative grid size-11 shrink-0 cursor-pointer place-items-center rounded-full text-base transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460] md:text-lg ${buttonTone} ${className}`}
+      >
+        <Icon icon={faBell} aria-hidden="true" />
+        {unread > 0 && (
+          <span className="absolute right-2 top-2 size-2 rounded-full bg-[#ff8d86] ring-2 ring-white" aria-hidden="true" />
+        )}
+      </button>
+      {open && (
+        <Modal title="Notifikasi" close={() => setOpen(false)}>
+          <div className="mt-4 grid gap-2.5">
+            {notifications.map((item) => {
+              const isUnread = !read.includes(item.id);
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    markRead([item.id]);
+                    if (go) {
+                      setOpen(false);
+                      go(item.target);
+                    }
+                  }}
+                  className={`grid w-full cursor-pointer grid-cols-[40px_1fr] items-start gap-3 rounded-2xl border px-3.5 py-3 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460] ${isUnread ? "border-[#9fbeae] bg-[#f2f7ef]" : "border-transparent bg-white"}`}
+                >
+                  <span className="grid size-10 place-items-center rounded-full bg-[#dce9df] text-[#0f6b58]">
+                    <Icon icon={faBell} aria-hidden="true" />
+                  </span>
+                  <span className="grid">
+                    <b className="text-sm text-[#173d35] md:text-base">{item.title}</b>
+                    <small className="mt-0.5 text-xs leading-5 text-[#4f6b60] md:text-sm">
+                      {item.text}
+                    </small>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <button
+            type="button"
+            onClick={() => markRead(notifications.map((item) => item.id))}
+            className="mt-4 min-h-11 w-full cursor-pointer rounded-full bg-[#e2eee6] px-4 text-sm font-semibold text-[#07513f] transition-colors hover:bg-[#d1e3d7] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460] md:text-base"
+          >
+            Tandai semua dibaca
+          </button>
+        </Modal>
+      )}
+    </>
   );
 }
 function BottomNav({ current, go }) {
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-50 h-[74px] bg-[#087965] px-2 pb-[19px] pt-[15px] text-[#087460] md:sticky md:inset-auto md:top-0 md:order-first md:flex md:h-screen md:w-[270px] md:shrink-0 md:flex-col md:bg-[#0d705e] md:p-6 md:text-white"
+      className="fixed inset-x-0 bottom-0 z-50 h-[74px] bg-[#087965] px-2 pb-[19px] pt-[15px] text-[#087460] lg:sticky lg:inset-auto lg:top-0 lg:order-first lg:flex lg:h-screen lg:w-[270px] lg:shrink-0 lg:flex-col lg:bg-[#0d705e] lg:p-6 lg:text-white"
       aria-label="Navigasi utama"
     >
-      <div className="hidden items-center gap-3 border-b border-white/20 pb-6 md:flex">
+      <div className="hidden items-center gap-3 border-b border-white/20 pb-6 lg:flex">
         <img
           src="/assets/pic/pic-3.png"
           width="92"
@@ -887,22 +1055,22 @@ function BottomNav({ current, go }) {
           </span>
         </div>
       </div>
-      <div className="grid h-[40px] grid-cols-6 rounded-[23px] bg-[#f5f7e9] px-1 md:mt-8 md:h-auto md:grid-cols-1 md:gap-2 md:rounded-none md:bg-transparent md:px-0">
+      <div className="grid h-[40px] grid-cols-6 rounded-[23px] bg-[#f5f7e9] px-1 lg:mt-8 lg:h-auto lg:grid-cols-1 lg:gap-2 lg:rounded-none lg:bg-transparent lg:px-0">
         {nav.map(([id, label, icon]) => (
           <button
             key={id}
-            className={`flex min-w-0 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-xl px-1 text-[13px] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f3d56a] md:min-h-12 md:flex-row md:justify-start md:gap-3 md:px-4 md:text-[17px] ${current === id ? "bg-[#c5e1d2] text-[#075746] md:bg-white/15 md:text-white" : "text-[#087460] hover:bg-[#dcebdd] md:text-white/75 md:hover:bg-white/10 md:hover:text-white"}`}
+            className={`flex min-w-0 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-xl px-1 text-[13px] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f3d56a] md:text-lg lg:min-h-12 lg:flex-row lg:justify-start lg:gap-3 lg:px-4 lg:text-xl ${current === id ? "bg-[#c5e1d2] text-[#075746] lg:bg-white/15 lg:text-white" : "text-[#087460] hover:bg-[#dcebdd] lg:text-white/75 lg:hover:bg-white/10 lg:hover:text-white"}`}
             onClick={() => go(id)}
             aria-current={current === id ? "page" : undefined}
           >
             <Icon icon={icon} />
-            <span className="max-w-full truncate text-[8px] font-medium leading-none md:text-[14px] md:font-semibold md:leading-normal">
+            <span className="max-w-full truncate text-[8px] font-medium leading-none md:text-[11px] lg:text-[14px] lg:font-semibold lg:leading-normal">
               {label}
             </span>
           </button>
         ))}
       </div>
-      <div className="mt-auto hidden rounded-2xl bg-white/10 p-4 md:block">
+      <div className="mt-auto hidden rounded-2xl bg-white/10 p-4 lg:block">
         <Icon
           icon={faHeartPulse}
           className="mb-3 text-2xl text-[#f2a1b8]"
@@ -923,140 +1091,9 @@ function BottomNav({ current, go }) {
     </nav>
   );
 }
-function Header({ title, subtitle, action }) {
-  return (
-    <header className="page-header">
-      <div>
-        <p>{subtitle}</p>
-        <h1>{title}</h1>
-      </div>
-      {action}
-    </header>
-  );
-}
-function LegacyHome({ go, user }) {
-  return (
-    <>
-      <section className="home-hero">
-        <div className="home-topbar">
-          <img
-            src="/assets/pic/pic-2.png"
-            width="1004"
-            height="1004"
-            alt="ReMind"
-          />
-          <button onClick={() => go("sos")} aria-label="Buka SOS">
-            <img src="/assets/pic/pic-6.png" alt="" />
-          </button>
-        </div>
-        <div className="hello">
-          <span>Halo,</span>
-          <h1>{user.name}!</h1>
-        </div>
-        <img
-          className="home-mascot"
-          src="/assets/pic/pic-5.png"
-          width="86"
-          height="77"
-          alt=""
-        />
-        <div className="mood-question">
-          <img className="deco deco-leaf" src="/assets/pic/pic-7.png" alt="" aria-hidden="true" />
-          <img className="deco deco-twig" src="/assets/pic/pic-8.png" alt="" aria-hidden="true" />
-          <h2>How are you feeling today?</h2>
-          <div className="moods">
-            {moodOptions.map(([m, , c]) => (
-              <button
-                key={m}
-                aria-label={m}
-                onClick={() => go("mood")}
-                style={{ "--mood": c }}
-              >
-                <img src={moodImages[m]} width="48" height="48" alt="" />
-                <span>{m}</span>
-              </button>
-            ))}
-          </div>
-          <button className="primary compact" onClick={() => go("mood")}>
-            Check My Mood <Icon icon={faChevronRight} />
-          </button>
-          <img
-            className="deco deco-caterpillar"
-            src="/assets/pic/pic-9.png"
-            alt=""
-            aria-hidden="true"
-          />
-          <img
-            className="deco deco-flowers"
-            src="/assets/pic/pic-10.png"
-            alt=""
-            aria-hidden="true"
-          />
-        </div>
-      </section>
-      <section className="section home-wellness">
-        <h2>Your Wellness</h2>
-        <div className="wellness-grid">
-          <Feature
-            image="/assets/pic/pic-11.png"
-            title="Pomodoro"
-            text="Belajar & Istirahat"
-            onClick={() => go("pomodoro")}
-          />
-          <Feature
-            image="/assets/pic/pic-12.png"
-            title="Grounding"
-            text="Tenangkan Diri"
-            onClick={() => go("sos")}
-          />
-          <Feature
-            image="/assets/pic/pic-13.png"
-            title="Mental Health"
-            text="Edukasi & Flashcard"
-            onClick={() => go("education")}
-          />
-          <Feature
-            image="/assets/pic/pic-16.png"
-            title="Mood Playlist"
-            text="Musik Sesuai Suasana"
-            onClick={() => go("playlist")}
-          />
-        </div>
-      </section>
-      <section className="daily-reminder">
-        <img
-          src="/assets/pic/pic-22.png"
-          width="154"
-          height="94"
-          alt=""
-        />
-        <div>
-          <b>Daily Reminder</b>
-          <p>
-            “You don't have to do everything at once.
-            <br />
-            Take it one step at a time”
-          </p>
-        </div>
-      </section>
-    </>
-  );
-}
-function LegacyFeature({ icon, image, title, text, onClick }) {
-  return (
-    <button className="feature" onClick={onClick}>
-      <span>
-        {image ? <img src={image} alt="" /> : <Icon icon={icon} />}
-      </span>
-      <b>{title}</b>
-      <small>{text}</small>
-      <Icon className="chev" icon={faChevronRight} />
-    </button>
-  );
-}
 function Home({ go, user }) {
   return (
-    <div className="min-h-[calc(100svh-74px)] bg-[#cfe8d2] font-['Poppins'] text-[#163f35] md:grid md:min-h-screen md:grid-cols-[minmax(430px,0.95fr)_minmax(480px,1.05fr)] md:grid-rows-[auto_auto] md:gap-7 md:bg-[#eef5ec] md:p-8">
+    <div className="min-h-[calc(100svh-74px)] bg-[#cfe8d2] font-['Poppins'] text-[#163f35] xl:grid xl:min-h-screen xl:grid-cols-[minmax(430px,0.95fr)_minmax(480px,1.05fr)] xl:grid-rows-[auto_auto] xl:gap-7 xl:bg-[#eef5ec] xl:p-8">
       <section className="relative h-[330px] overflow-hidden px-4 pt-2 md:h-auto md:min-h-[520px] md:rounded-[32px] md:bg-[#cfe8d2] md:p-8 md:shadow-[0_18px_45px_rgba(22,84,67,0.12)]">
         <img src="/assets/pic/pic-62.png" alt="" aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-25" />
         <div className="relative z-10 flex h-[54px] items-center justify-between">
@@ -1077,14 +1114,14 @@ function Home({ go, user }) {
           <img src="/assets/pic/pic-8.png" alt="" aria-hidden="true" className="absolute -right-1 top-0 h-16 w-12 object-contain" />
           <h2 className="m-0 text-center text-[14px] font-bold md:text-xl">How are you feeling today?</h2>
           <div className="mt-2 grid grid-cols-5 gap-1 md:mt-5 md:gap-3">
-            {moodOptions.map(([m, icon, c]) => (
+            {moodOptions.map(([m, image]) => (
               <button key={m} aria-label={m} onClick={() => go("mood")} className="flex min-w-0 cursor-pointer flex-col items-center gap-1 rounded-xl py-0.5 transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#087460]">
-                <span className="grid size-[42px] place-items-center rounded-full border-[3px] border-white text-[21px] text-[#355f4f] shadow-sm md:size-[62px] md:text-[30px]" style={{ backgroundColor: c }}><Icon icon={icon} /></span>
+                <span className="grid size-[42px] place-items-center overflow-hidden rounded-full md:size-[62px]"><img src={image} alt="" width="62" height="62" className="size-full object-contain" /></span>
                 <span className="max-w-full truncate text-[11px] font-medium md:text-sm">{m}</span>
               </button>
             ))}
           </div>
-          <button className="mx-auto mt-1 flex min-h-[29px] w-[196px] cursor-pointer items-center justify-center gap-1 rounded-[18px] bg-[#72a77b] px-5 text-[12px] font-medium text-white hover:bg-[#5d9168] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#075746] md:mt-4 md:min-h-11 md:w-[260px] md:text-base" onClick={() => go("mood")}>
+          <button className="mx-auto mt-1 flex min-h-11 w-[196px] cursor-pointer items-center justify-center gap-1 rounded-[18px] bg-[#2f7d66] px-5 text-[12px] font-medium text-white hover:bg-[#286b57] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#075746] md:mt-4 md:min-h-11 md:w-[260px] md:text-base" onClick={() => go("mood")}>
             Check My Mood <Icon icon={faChevronRight} />
           </button>
           <img src="/assets/pic/pic-9.png" alt="" aria-hidden="true" className="absolute bottom-1 right-5 h-5 w-9 object-contain" />
@@ -1123,15 +1160,36 @@ function Feature({ icon, image, title, text, onClick }) {
     </button>
   );
 }
-function Tasks({ tasks, setTasks, flash, go }) {
+function Tasks({ tasks, setTasks, flash, go, user }) {
+  const { first, rest } = splitName(user?.name);
   const [adding, setAdding] = useState(false);
   const [searching, setSearching] = useState(false);
+  const [filtering, setFiltering] = useState(false);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState(null);
-  const [showReminder, setShowReminder] = useState(false);
+  const [dateFilter, setDateFilter] = useState("all");
+  const [priorityFilter, setPriorityFilter] = useState([]);
   const visible = tasks.filter((t) =>
     t.title.toLowerCase().includes(search.toLowerCase()),
   );
+  const todayKey = new Date().toDateString();
+  const tomorrowDate = new Date();
+  tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+  const tomorrowKey = tomorrowDate.toDateString();
+  const filteredTasks = tasks.filter((task) => {
+    const taskDate = task.date ? new Date(task.date).toDateString() : "";
+    const matchesDate =
+      dateFilter === "all" ||
+      (dateFilter === "today" && taskDate === todayKey) ||
+      (dateFilter === "tomorrow" && taskDate === tomorrowKey) ||
+      (dateFilter === "upcoming" &&
+        task.date &&
+        new Date(task.date).getTime() > tomorrowDate.getTime());
+    const matchesPriority =
+      priorityFilter.length === 0 || priorityFilter.includes(task.priority);
+    return matchesDate && matchesPriority;
+  });
+  const filterActive = dateFilter !== "all" || priorityFilter.length > 0;
   const completed = tasks.filter((task) => task.done).length;
   const percent = tasks.length
     ? Math.round((completed / tasks.length) * 100)
@@ -1154,15 +1212,16 @@ function Tasks({ tasks, setTasks, flash, go }) {
           <button className="ml-auto grid size-11 place-items-center text-xl text-white focus-visible:outline-2 focus-visible:outline-[#087460]" onClick={() => { setSelected(null); setSearching(true); }} aria-label="Cari">
             <Icon icon={faMagnifyingGlass} />
           </button>
+          <NotificationBell tasks={tasks} go={go} variant="plain" />
         </header>
         <div className="relative z-10 flex items-center px-4 md:px-12">
           <img className="h-[76px] w-[70px] object-contain md:h-24 md:w-24" src="/assets/pic/pic-17.png" alt="Maskot ReMind" />
-          <p className="text-[18px] font-semibold leading-[23px] md:text-2xl">Hai, Ramadhani<br />Septhea Dwi Putri<br /><b className="text-[13px] text-white [text-shadow:0_2px_3px_rgba(34,82,54,.45)] md:text-base">“Yuk, selesaikan tugasmu satu per satu!”</b></p>
+          <p className="text-[18px] font-semibold leading-[23px] md:text-2xl">Hai, {first}<br />{rest}<br /><b className="text-[13px] text-[#075746] md:text-base">“Yuk, selesaikan tugasmu satu per satu!”</b></p>
         </div>
         <span className={`relative z-10 ml-8 inline-block min-w-[117px] rounded-full px-4 text-center text-[18px] leading-6 text-[#242424] ${selected.priority === "Tinggi" ? "bg-[#e25b55]" : selected.priority === "Sedang" ? "bg-[#a8baaa]" : "bg-[#9fb69e]"}`}>{selected.priority}</span>
-        <div className="relative z-10 mx-auto mt-7 grid max-w-[900px] gap-3 px-[15px] md:grid-cols-2 md:px-10">
+        <div className="relative z-10 mx-auto mt-7 grid max-w-[900px] gap-3 px-[15px] lg:grid-cols-2 lg:px-10">
           {[selected, ...tasks.filter((task) => task.id !== selected.id).slice(0, 1)].map((task) => (
-            <article className="rounded-[46px] bg-[#a9bead] px-8 pb-3 pt-2 text-white md:min-h-[260px] md:px-10 md:py-6" key={task.id}>
+            <article className="rounded-[46px] bg-[#3d7359] px-8 pb-3 pt-2 text-white md:min-h-[260px] md:px-10 md:py-6" key={task.id}>
               <h2 className="text-center text-[18px] font-semibold leading-[23px] md:text-xl">{task.title}</h2>
               <div className="mt-1 flex items-center justify-between border-t-2 border-white pt-1 text-[15px] font-semibold md:mt-5 md:pt-3"><span><Icon className="mr-3 text-[30px]" icon={faClock} /> {new Date(task.date).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</span><span><Icon className="mr-3 text-[30px]" icon={faClock} /> {task.time}</span></div>
               <p className="mt-4 text-[17px] font-semibold">Catatan : <b className="float-right mr-[38%]">{task.note || "-"}</b></p>
@@ -1174,6 +1233,94 @@ function Tasks({ tasks, setTasks, flash, go }) {
       </section>
     );
   }
+  if (filtering)
+    return (
+      <section className="mx-auto min-h-[calc(100dvh-69px)] w-full max-w-[760px] bg-[#f4f8eb] px-5 pb-28 pt-4 font-['Poppins'] text-[#174f38] md:min-h-screen md:px-10 md:py-8">
+        <header className="flex items-center gap-3">
+          <button
+            type="button"
+            className="grid size-11 place-items-center text-[27px] text-[#73a883] transition-colors hover:bg-white/70 focus-visible:outline-2 focus-visible:outline-[#087460]"
+            onClick={() => setFiltering(false)}
+            aria-label="Kembali"
+          >
+            <Icon icon={faArrowLeft} />
+          </button>
+          <h1 className="m-0 text-[22px] font-bold md:text-3xl">Filter</h1>
+        </header>
+        <h2 className="mb-3 mt-8 text-lg font-bold md:text-xl">Lihat berdasarkan</h2>
+        <div className="flex flex-wrap gap-2">
+          {[
+            ["all", "Semua"],
+            ["today", "Hari ini"],
+            ["tomorrow", "Besok"],
+            ["upcoming", "Mendatang"],
+          ].map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={dateFilter === value}
+              onClick={() => setDateFilter(value)}
+              className={`min-h-11 cursor-pointer rounded-full px-5 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460] ${dateFilter === value ? "bg-[#0f6b58] text-white" : "bg-[#f1f5e8] text-[#245347] hover:bg-[#e5eddb]"}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <h2 className="mb-3 mt-8 text-lg font-bold md:text-xl">Prioritas</h2>
+        <div className="grid gap-3">
+          {[
+            ["Tinggi", "#ef8c9a"],
+            ["Sedang", "#f4e56b"],
+            ["Rendah", "#a9d3a7"],
+          ].map(([priority, color]) => {
+            const active = priorityFilter.includes(priority);
+            return (
+              <button
+                key={priority}
+                type="button"
+                role="checkbox"
+                aria-checked={active}
+                onClick={() =>
+                  setPriorityFilter((current) =>
+                    current.includes(priority)
+                      ? current.filter((item) => item !== priority)
+                      : [...current, priority],
+                  )
+                }
+                className="flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-xl px-2 text-left text-base font-medium transition-colors hover:bg-white/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460]"
+              >
+                <span
+                  className={`grid size-7 place-items-center rounded-md border-2 text-sm ${active ? "border-[#0f6b58] bg-[#0f6b58] text-white" : "border-[#7fa08f] bg-white text-transparent"}`}
+                >
+                  <Icon icon={faCircleCheck} aria-hidden="true" />
+                </span>
+                <Icon icon={faHeart} aria-hidden="true" style={{ color }} />
+                <span>{priority}</span>
+              </button>
+            );
+          })}
+        </div>
+        <div className="mt-10 grid gap-2.5">
+          <button
+            type="button"
+            onClick={() => setFiltering(false)}
+            className="min-h-12 w-full cursor-pointer rounded-full bg-[#2f7d66] px-5 text-base font-semibold text-white transition-colors hover:bg-[#286b57] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          >
+            Terapkan
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setDateFilter("all");
+              setPriorityFilter([]);
+            }}
+            className="min-h-11 w-full cursor-pointer rounded-full px-5 text-sm font-semibold text-[#4f6b60] transition-colors hover:bg-white/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460]"
+          >
+            Reset filter
+          </button>
+        </div>
+      </section>
+    );
   if (tasks.length > 0 && tasks.every((task) => task.done))
     return (
       <section className="relative mx-auto min-h-[calc(100dvh-69px)] w-full max-w-[1120px] overflow-hidden bg-[#e3f5e5] bg-[url('/assets/pic/pic-62.png')] bg-cover px-4 pt-[105px] text-center text-[#075746] md:min-h-screen md:pt-24">
@@ -1181,7 +1328,7 @@ function Tasks({ tasks, setTasks, flash, go }) {
         <h1 className="mt-5 text-[26px] font-bold md:text-4xl">Semua tugas selesai!</h1>
         <p className="mt-2 text-[16px] font-medium md:text-xl">Kamu sudah melakukan yang terbaik hari ini</p>
         <blockquote className="relative mx-auto mt-4 flex min-h-[164px] max-w-[358px] items-start justify-center rounded-[45px] bg-white px-8 pt-7 text-[16px] leading-6 text-[#174f38] md:max-w-[560px] md:text-xl">Jangan lupa istirahat ya,<br />kamu juga perlu waktu buat diri sendiri<img className="absolute -bottom-5 left-1/2 w-[120px] -translate-x-1/2" src="/assets/pic/pic-19.png" alt="" /></blockquote>
-        <button className="mt-10 min-h-[50px] w-[250px] rounded-full bg-[#61aa91] text-[16px] text-white hover:bg-[#4c957d] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#075746]" onClick={() => go("home")}>Kembali ke Beranda</button>
+        <button className="mt-10 min-h-[50px] w-[250px] rounded-full bg-[#2f7d66] text-[16px] text-white hover:bg-[#286b57] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#075746]" onClick={() => go("home")}>Kembali ke Beranda</button>
       </section>
     );
   if (searching)
@@ -1192,6 +1339,7 @@ function Tasks({ tasks, setTasks, flash, go }) {
             <Icon icon={faArrowLeft} />
           </button>
           <h1 className="text-[18px] font-medium md:text-2xl">Telusuri</h1>
+          <NotificationBell tasks={tasks} go={go} className="ml-auto" />
         </header>
         <label className="mx-auto mt-5 flex min-h-[35px] max-w-[740px] items-center rounded-[11px] bg-[#fbfbf5] px-3 text-[#3c9b89]">
           <Icon className="text-xl" icon={faMagnifyingGlass} />
@@ -1229,19 +1377,20 @@ function Tasks({ tasks, setTasks, flash, go }) {
           <button className="ml-auto grid size-11 place-items-center text-xl text-white focus-visible:outline-2 focus-visible:outline-[#087460]" onClick={() => setSearching(true)} aria-label="Cari">
             <Icon icon={faMagnifyingGlass} />
           </button>
-          <button className="grid size-11 place-items-center text-xl text-white focus-visible:outline-2 focus-visible:outline-[#087460]" onClick={() => setShowReminder(true)} aria-label="Reminder">
-            <Icon icon={faBell} />
+          <button className="grid size-11 place-items-center text-xl text-white focus-visible:outline-2 focus-visible:outline-[#087460]" onClick={() => setFiltering(true)} aria-label="Filter tugas">
+            <Icon icon={faFilter} />
           </button>
+          <NotificationBell tasks={tasks} go={go} variant="plain" />
         </div>
         <div className="-mt-2 flex items-center md:mt-0">
           <img className="h-[77px] w-[76px] object-contain md:h-28 md:w-28" src="/assets/pic/pic-17.png" alt="Maskot ReMind" width="86" height="77" />
           <div>
           <h1 className="text-[18px] font-semibold leading-[22px] md:text-2xl md:leading-7">
-            Hai, Ramadhani
+            Hai, {first}
             <br />
-            Septhea Dwi Putri
+            {rest}
           </h1>
-          <p className="text-[13px] font-bold text-white [text-shadow:0_2px_3px_rgba(34,82,54,.48)] md:text-base">“Yuk, selesaikan tugasmu satu per satu!”</p>
+          <p className="text-[13px] font-bold text-[#075746] md:text-base">“Yuk, selesaikan tugasmu satu per satu!”</p>
           </div>
         </div>
         <div className="mt-1 flex items-end justify-between md:mx-auto md:max-w-[820px]">
@@ -1251,18 +1400,44 @@ function Tasks({ tasks, setTasks, flash, go }) {
             <span className="text-[17px] font-semibold">Selesai</span>
           </aside>
         </div>
-        <button className="mx-auto mt-3 flex min-h-[61px] w-full max-w-[335px] items-center justify-center gap-4 rounded-full !border-[3px] !border-black bg-[#7faa8a] text-[18px] font-semibold text-white shadow-[7px_8px_0_#000] hover:bg-[#719b7c] focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#087460] md:max-w-[520px]" onClick={() => setAdding(true)}>
+        <button className="mx-auto mt-3 flex min-h-[61px] w-full max-w-[335px] items-center justify-center gap-4 rounded-full !border-[3px] !border-black bg-[#2f7d66] text-[18px] font-semibold text-white shadow-[7px_8px_0_#000] hover:bg-[#286b57] focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#087460] md:max-w-[520px]" onClick={() => setAdding(true)}>
           <Icon icon={faPlus} /> Tambah Tugas
         </button>
       </section>
       <section className="mx-auto min-h-[430px] w-full max-w-[1120px] bg-white px-[13px] pb-12 pt-4 text-[#174f38] md:px-12 md:py-8">
         <h2 className="ml-2 text-[18px] font-medium md:text-2xl">Hari Ini</h2>
-        {visible.length ? (
-          <div className="mx-auto mt-1 min-h-[365px] max-w-[900px] overflow-hidden rounded-[52px] bg-[#80aa8b] pt-6 md:grid md:grid-cols-2 md:gap-px md:rounded-[38px] md:p-6">
-            {visible.map((t) => (
-              <article className="relative flex min-h-[65px] items-center border-b border-white px-5 text-white md:rounded-2xl md:border md:px-4" key={t.id}>
+        {filterActive && (
+          <div className="ml-2 mt-1 flex flex-wrap items-center gap-2 text-xs text-[#4f6b60]">
+            <span>
+              {dateFilter === "all"
+                ? "Semua tanggal"
+                : dateFilter === "today"
+                  ? "Hari ini"
+                  : dateFilter === "tomorrow"
+                    ? "Besok"
+                    : "Mendatang"}
+              {priorityFilter.length
+                ? ` · Prioritas ${priorityFilter.join(", ")}`
+                : ""}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setDateFilter("all");
+                setPriorityFilter([]);
+              }}
+              className="min-h-8 cursor-pointer rounded-full bg-[#eef5e9] px-3 font-semibold text-[#0f6b58] hover:bg-[#e0ecda] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460]"
+            >
+              Hapus filter
+            </button>
+          </div>
+        )}
+        {filteredTasks.length ? (
+          <div className="mx-auto mt-1 min-h-[200px] max-w-[900px] overflow-hidden rounded-[52px] bg-[#3d7359] pt-6 lg:grid lg:min-h-[220px] lg:grid-cols-2 lg:gap-px lg:rounded-[38px] lg:p-6">
+            {filteredTasks.map((t) => (
+              <article className="relative flex min-h-[65px] items-center border-b border-white px-5 text-white md:min-h-[84px] lg:min-h-[92px] lg:rounded-2xl lg:border lg:px-4" key={t.id}>
                 <button
-                  className={`grid size-[28px] shrink-0 place-items-center rounded-sm !border-[3px] !border-white text-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${t.done ? "bg-white text-[#78aa8b]" : "bg-transparent"}`}
+                  className={`grid size-[28px] shrink-0 place-items-center rounded-sm !border-[3px] !border-white text-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white md:size-9 lg:size-10 ${t.done ? "bg-white text-[#78aa8b]" : "bg-transparent"}`}
                   onClick={() =>
                     setTasks(
                       tasks.map((x) =>
@@ -1277,30 +1452,37 @@ function Tasks({ tasks, setTasks, flash, go }) {
                   {t.done && <Icon icon={faCircleCheck} />}
                 </button>
                 <button className="min-w-0 flex-1 px-2 text-left focus-visible:outline-2 focus-visible:outline-white" onClick={() => setSelected(t)}>
-                  <h2 className="text-[12px] font-semibold leading-[14px]">{t.title}</h2>
-                  {!t.done && <p className="text-[11px] font-semibold leading-[14px]">
+                  <h2 className="text-[12px] font-semibold leading-[14px] md:text-base md:leading-5">{t.title}</h2>
+                  {!t.done && <p className="text-[11px] font-semibold leading-[14px] md:text-[13px] md:leading-5">
                     {new Date(t.date).toLocaleDateString("id-ID", {
                       day: "numeric",
                       month: "long",
                       year: "numeric",
                     })}
                   </p>}
-                  {!t.done && t.note && <small className="block text-[10px] leading-[12px]">{t.note}</small>}
+                  {!t.done && t.note && <small className="block text-[10px] leading-[12px] md:text-xs">{t.note}</small>}
                 </button>
-                <span className={`h-[11px] w-[73px] shrink-0 rounded-full ${t.priority === "Tinggi" ? "bg-[#ef6c80]" : t.priority === "Sedang" ? "bg-[#f4f486]" : "bg-[#a9c39f]"}`} aria-label={`Prioritas ${t.priority}`} />
+                <span className={`h-[11px] w-[73px] shrink-0 rounded-full md:h-3 md:w-[92px] ${t.priority === "Tinggi" ? "bg-[#ef6c80]" : t.priority === "Sedang" ? "bg-[#f4f486]" : "bg-[#a9c39f]"}`} aria-label={`Prioritas ${t.priority}`} />
               </article>
             ))}
           </div>
         ) : (
           <Empty
             title="Tidak ada tugas ditemukan"
-            text="Ubah kata pencarian atau tambahkan tugas baru."
+            text={
+              filterActive
+                ? "Tidak ada tugas yang cocok dengan filter ini. Hapus filter atau tambahkan tugas baru."
+                : "Ubah kata pencarian atau tambahkan tugas baru."
+            }
           />
         )}
       </section>
       {adding && (
         <TaskForm
           close={() => setAdding(false)}
+          user={user}
+          tasks={tasks}
+          go={go}
           save={(t) => {
             setTasks([...tasks, { ...t, id: Date.now(), done: false }]);
             setAdding(false);
@@ -1308,20 +1490,11 @@ function Tasks({ tasks, setTasks, flash, go }) {
           }}
         />
       )}
-      {showReminder && (
-        <div className="fixed inset-0 z-[100] grid place-items-center bg-black/10 px-4">
-          <div className="w-full max-w-[360px] rounded-[48px] bg-white px-8 pb-7 pt-7 text-center text-[#111] shadow-xl md:max-w-[460px]" role="dialog" aria-modal="true" aria-label="Reminder tugas">
-            <Icon className="text-[35px]" icon={faBell} />
-            <h2 className="mt-1 text-[18px] font-semibold">Reminder</h2>
-            <p className="mt-1 text-[17px] leading-[22px]">Tugas “Membuat PPT presentasi”<br />akan dimulai dalam 10 menit.</p>
-            <div className="mt-10 flex justify-between gap-8"><button className="min-h-[40px] flex-1 rounded-full !border-[4px] !border-[#075b2a] bg-white text-[16px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460]" onClick={() => setShowReminder(false)}>Nanti</button><button className="min-h-[40px] flex-1 rounded-full bg-[#075b2a] text-[16px] text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460]" onClick={() => setShowReminder(false)}>Oke</button></div>
-          </div>
-        </div>
-      )}
     </>
   );
 }
-function TaskForm({ close, save }) {
+function TaskForm({ close, save, user, tasks = [], go }) {
+  const { first, rest } = splitName(user?.name);
   const [form, setForm] = useState({
     title: "Membaca Materi Kuliah Sistem Informasi Keperawatan",
     date: "2026-10-03",
@@ -1336,10 +1509,11 @@ function TaskForm({ close, save }) {
           <div className="flex items-center gap-5">
             <button className="grid size-11 place-items-center text-[27px] text-[#73a883] focus-visible:outline-2 focus-visible:outline-[#087460]" type="button" onClick={close} aria-label="Kembali"><Icon icon={faArrowLeft} /></button>
             <h1 className="text-[18px] font-semibold text-[#174f38] md:text-2xl">Tambah Tugas</h1>
+            <NotificationBell tasks={tasks} go={go} className="ml-auto" />
           </div>
           <div className="flex items-center md:mt-2">
             <img className="h-[77px] w-[76px] object-contain md:h-24 md:w-24" src="/assets/pic/pic-17.png" alt="Maskot ReMind" />
-            <p className="text-[18px] font-semibold leading-[22px] text-[#174f38] md:text-2xl">Hai, Ramadhani<br />Septhea Dwi Putri<br /><b className="text-[13px] text-white [text-shadow:0_2px_3px_rgba(34,82,54,.48)] md:text-base">“Yuk, selesaikan tugasmu satu per satu!”</b></p>
+            <p className="text-[18px] font-semibold leading-[22px] text-[#174f38] md:text-2xl">Hai, {first}<br />{rest}<br /><b className="text-[13px] text-[#075746] md:text-base">“Yuk, selesaikan tugasmu satu per satu!”</b></p>
           </div>
         </header>
       <form
@@ -1349,9 +1523,9 @@ function TaskForm({ close, save }) {
           save(form);
         }}
       >
-        <label className="block md:col-span-2"><span className="ml-1 text-[17px] font-semibold">Nama Tugas *</span><textarea required rows="2" className="mx-auto -mt-1 block h-[64px] w-full max-w-[292px] resize-none rounded-full !border-[3px] !border-black bg-[#78a985] px-5 py-2 text-center text-[14px] font-semibold leading-[19px] text-white outline-none focus-visible:ring-2 focus-visible:ring-[#087460] md:max-w-none" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></label>
-        <label className="block"><span className="ml-1 text-[17px] font-semibold">Tanggal*</span><input className="mx-auto -mt-1 block min-h-[64px] w-full max-w-[292px] rounded-full !border-[3px] !border-black bg-[#78a985] px-6 text-center text-[14px] font-semibold text-white outline-none focus-visible:ring-2 focus-visible:ring-[#087460] md:max-w-none" type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></label>
-        <label className="block"><span className="ml-1 text-[17px] font-semibold">Waktu*</span><input className="mx-auto -mt-1 block min-h-[64px] w-full max-w-[292px] rounded-full !border-[3px] !border-black bg-[#78a985] px-6 text-center text-[14px] font-semibold text-white outline-none focus-visible:ring-2 focus-visible:ring-[#087460] md:max-w-none" type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} /></label>
+        <label className="block md:col-span-2"><span className="ml-1 text-[17px] font-semibold">Nama Tugas *</span><textarea required rows="2" className="mx-auto -mt-1 block h-[64px] w-full max-w-[292px] resize-none rounded-full !border-[3px] !border-black bg-[#78a985] px-5 py-2 text-center text-[14px] font-semibold leading-[19px] text-white outline-none focus-visible:ring-2 focus-visible:ring-[#087460] md:max-w-none md:text-base" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></label>
+        <label className="block"><span className="ml-1 text-[17px] font-semibold">Tanggal*</span><span className="relative mx-auto mt-0.5 block w-full max-w-[292px] md:max-w-none"><Icon icon={faCalendarDays} aria-hidden="true" className="pointer-events-none absolute left-5 top-1/2 text-base text-white/80 -translate-y-1/2" /><input className="block min-h-[64px] w-full rounded-full !border-[3px] !border-black bg-[#78a985] px-12 text-center text-[14px] font-semibold text-white outline-none focus-visible:ring-2 focus-visible:ring-[#087460] md:text-base" type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></span></label>
+        <label className="block"><span className="ml-1 text-[17px] font-semibold">Waktu*</span><span className="relative mx-auto mt-0.5 block w-full max-w-[292px] md:max-w-none"><Icon icon={faClock} aria-hidden="true" className="pointer-events-none absolute left-5 top-1/2 text-base text-white/80 -translate-y-1/2" /><input className="block min-h-[64px] w-full rounded-full !border-[3px] !border-black bg-[#78a985] px-12 text-center text-[14px] font-semibold text-white outline-none focus-visible:ring-2 focus-visible:ring-[#087460] md:text-base" type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} /></span></label>
         <div className="md:col-span-2">
           <span className="ml-1 text-[17px] font-semibold">Prioritas *</span>
           <div className="-mx-7 mt-2 grid grid-cols-3 gap-2 md:mx-0" role="radiogroup" aria-label="Prioritas">
@@ -1372,7 +1546,7 @@ function TaskForm({ close, save }) {
         <label className="block md:col-span-2">
           <span className="ml-1 text-[17px] font-semibold">Catatan (opsional)</span>
           <textarea
-            className="mx-auto mt-1 block min-h-[100px] w-full max-w-[282px] resize-none rounded-[8px] !border-[3px] !border-black px-4 py-3 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-[#087460] md:max-w-none"
+            className="mx-auto mt-1 block min-h-[100px] w-full max-w-[282px] resize-none rounded-[8px] !border-[3px] !border-black px-4 py-3 text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-[#087460] md:max-w-none md:text-base"
             value={form.note}
             onChange={(e) => setForm({ ...form, note: e.target.value })}
             placeholder="Tambahkan catatan..."
@@ -1402,6 +1576,59 @@ function Pomodoro({ go }) {
   const [running, setRunning] = useState(false);
   const [pausedNotice, setPausedNotice] = useState(false);
   const [alarmNotice, setAlarmNotice] = useState("");
+  const alarmAudio = useRef(null);
+  const alarmPlayed = useRef(false);
+  const stopAlarmSound = () => {
+    if (!alarmAudio.current) return;
+    clearInterval(alarmAudio.current.interval);
+    alarmAudio.current.context.close?.().catch(() => {});
+    alarmAudio.current = null;
+  };
+  const playAlarmSound = () => {
+    const AudioCtor = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtor) return;
+    if (!alarmAudio.current) {
+      const context = new AudioCtor();
+      context.resume?.();
+      alarmAudio.current = { context, interval: null };
+    }
+    const context = alarmAudio.current.context;
+    const ring = () => {
+      const now = context.currentTime;
+      [0, 0.45, 0.9, 1.6].forEach((offset, index) => {
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        oscillator.type = "sine";
+        oscillator.frequency.value = index % 2 ? 660 : 880;
+        gain.gain.setValueAtTime(0.0001, now + offset);
+        gain.gain.exponentialRampToValueAtTime(0.18, now + offset + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.32);
+        oscillator.connect(gain).connect(context.destination);
+        oscillator.start(now + offset);
+        oscillator.stop(now + offset + 0.35);
+      });
+    };
+    ring();
+    alarmAudio.current.interval = setInterval(ring, 2600);
+  };
+  const prepareAlarmSound = () => {
+    const AudioCtor = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtor || alarmAudio.current) return;
+    const context = new AudioCtor();
+    context.resume?.();
+    alarmAudio.current = { context, interval: null };
+  };
+  useEffect(() => {
+    if (seconds === 0 && mode === "focus") {
+      if (!alarmPlayed.current) {
+        alarmPlayed.current = true;
+        playAlarmSound();
+      }
+    } else if (seconds > 0) {
+      alarmPlayed.current = false;
+    }
+  }, [seconds, mode]);
+  useEffect(() => () => stopAlarmSound(), []);
   useEffect(() => {
     if (!running) return;
     const timer = setInterval(
@@ -1418,6 +1645,8 @@ function Pomodoro({ go }) {
     return () => clearInterval(timer);
   }, [running]);
   const choose = (m) => {
+    stopAlarmSound();
+    alarmPlayed.current = false;
     setMode(m);
     setSeconds(defaults[m]);
     setRunning(false);
@@ -1461,6 +1690,8 @@ function Pomodoro({ go }) {
           <button
             className="mt-3 min-h-[49px] w-full rounded-full bg-[#f4faef] text-[17px] text-[#26715c] hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             onClick={() => {
+              stopAlarmSound();
+              alarmPlayed.current = false;
               setSeconds(defaults.focus);
               setRunning(false);
             }}
@@ -1483,7 +1714,7 @@ function Pomodoro({ go }) {
       </section>
     );
   return (
-    <section className="mx-auto min-h-[calc(100dvh-69px)] w-full max-w-[1120px] bg-[#d3edda] px-[22px] pb-5 pt-3 text-[#075746] md:grid md:min-h-screen md:grid-cols-[1fr_0.9fr] md:gap-x-12 md:px-14 md:py-9">
+    <section className="mx-auto min-h-[calc(100dvh-69px)] w-full max-w-[1120px] bg-[#d3edda] px-[22px] pb-5 pt-3 text-[#075746] xl:grid xl:min-h-screen xl:grid-cols-[1fr_0.9fr] xl:gap-x-12 lg:px-14 lg:py-9 md:min-h-screen">
       <header className="-ml-3 flex items-start gap-1 md:col-span-2 md:ml-0 md:gap-4">
         <button className="grid size-9 shrink-0 place-items-center text-[27px] text-[#73a883] focus-visible:outline-2 focus-visible:outline-[#087460]" onClick={() => go("home")} aria-label="Kembali">
           <Icon icon={faArrowLeft} />
@@ -1509,7 +1740,11 @@ function Pomodoro({ go }) {
         <div className="mx-auto mt-3 grid max-w-[345px] grid-cols-[58px_1fr_58px] items-center gap-4">
           <button
             className="grid size-[58px] place-items-center rounded-full bg-[#9dd4a6] text-[29px] hover:bg-[#8bc596] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460]"
-            onClick={() => setSeconds(defaults[mode])}
+            onClick={() => {
+              stopAlarmSound();
+              alarmPlayed.current = false;
+              setSeconds(defaults[mode]);
+            }}
             aria-label="Ulangi"
           >
             <Icon icon={faRotateRight} />
@@ -1520,7 +1755,10 @@ function Pomodoro({ go }) {
               if (running) {
                 setRunning(false);
                 setPausedNotice(true);
-              } else setRunning(true);
+              } else {
+                prepareAlarmSound();
+                setRunning(true);
+              }
             }}
             aria-label={running ? "Jeda" : "Mulai"}
           >
@@ -1576,132 +1814,170 @@ function Pomodoro({ go }) {
     </section>
   );
 }
-function Mood({ go, persist }) {
+function Mood({ go, user, persist }) {
+  const { first, rest } = splitName(user?.name);
   const [mood, setMood] = useState("Happy");
   const [sleep, setSleep] = useState(7);
   const [stress, setStress] = useState(20);
   const [influences, setInfluences] = useState("");
   const [result, setResult] = useState(false);
+  const moodNote =
+    stress >= 70 || ["Stressed", "Angry"].includes(mood)
+      ? "Hari ini terasa berat. Tarik napas, kecilkan langkahmu, dan beri dirimu jeda. Kamu tidak harus menyelesaikan semuanya sekaligus."
+      : mood === "Sad"
+        ? "Sedih itu wajar. Beri dirimu waktu, lalu ceritakan pada orang yang kamu percaya jika rasanya terlalu penuh."
+        : "Hari ini cukup baik. Pertahankan ritme istirahat dan kegiatan yang membuatmu merasa tenang.";
   if (result)
     return (
-      <section className="relative flex min-h-[calc(100svh-74px)] flex-col items-center overflow-hidden bg-[#e6f3e4] px-7 pb-5 pt-5 font-['Poppins'] text-[#174d3f] md:min-h-screen md:px-12 md:py-9">
+      <section className="relative min-h-[calc(100svh-74px)] overflow-hidden bg-[#e6f3e4] px-4 pb-8 pt-4 font-['Poppins'] text-[#174d3f] md:min-h-screen md:px-8 md:py-8">
         <img src="/assets/pic/pic-62.png" alt="" aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-45" />
-        <button className="relative z-10 flex min-h-11 w-full cursor-pointer items-center gap-3 text-left text-[20px] font-semibold hover:text-[#087460] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460] md:max-w-[760px] md:text-[27px]" onClick={() => setResult(false)}>
-          <Icon icon={faArrowLeft} /> Hasil mood tracker
-        </button>
-        <div className="relative z-10 mt-7 flex min-h-[128px] w-[210px] items-center justify-center gap-2 rounded-[28px] bg-[#d5e4c8]/90 px-5 md:w-[340px]">
-          <img src="/assets/pic/pic-31.png" alt="" className="w-[95px] object-contain md:w-[130px]" />
-          <b className="text-[24px] leading-[1.55] md:text-[32px]">
-            Mood
-            <br />
-            Tracker
-          </b>
+        <div className="relative z-10 mx-auto flex w-full max-w-[1080px] flex-col lg:min-h-[calc(100svh-4rem)]">
+          <button className="flex min-h-11 w-full cursor-pointer items-center gap-3 text-left text-xl font-semibold hover:text-[#087460] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460] md:text-2xl" onClick={() => setResult(false)}>
+            <Icon icon={faArrowLeft} aria-hidden="true" /> Hasil mood tracker
+          </button>
+          <div className="mt-4 grid gap-5 xl:flex-1 xl:content-center xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] xl:items-start xl:gap-8">
+            <div className="grid gap-5">
+              <div className="flex min-h-[128px] w-full items-center justify-center gap-3 rounded-[28px] bg-[#d5e4c8]/90 px-5 md:min-h-[150px]">
+                <img src="/assets/pic/pic-31.png" alt="" className="w-[95px] object-contain md:w-[130px]" />
+                <b className="text-2xl leading-[1.55] md:text-[32px]">
+                  Mood
+                  <br />
+                  Tracker
+                </b>
+              </div>
+              <article className="relative rounded-[18px] bg-[#fffdf6] px-5 pb-5 pt-8 shadow-[0_3px_8px_rgba(36,58,48,0.25)] md:px-8">
+                <h2 className="absolute -top-6 left-1/2 m-0 w-[220px] -translate-x-1/2 rounded-[22px] bg-[#91b779] py-2 text-center text-[17px] text-white md:w-[300px] md:text-xl">Your mood today</h2>
+                {[
+                  { key: "mood", image: moodImages[mood], value: mood },
+                  { key: "sleep", icon: faBed, value: `${sleep} jam` },
+                  {
+                    key: "stress",
+                    icon: faBrain,
+                    value: stress < 35 ? "Rendah" : stress < 70 ? "Sedang" : "Tinggi",
+                  },
+                ].map(({ key, image, icon, value }) => (
+                  <p key={key} className="m-0 grid min-h-[52px] grid-cols-[54px_24px_1fr] items-center text-lg md:text-xl">
+                    {image ? (
+                      <img src={image} alt="" width="54" height="54" className="size-[42px] object-contain" />
+                    ) : (
+                      <Icon icon={icon} aria-hidden="true" className="text-[34px] text-[#087460]" />
+                    )}{" "}
+                    <span>:</span> <b>{value}</b>
+                  </p>
+                ))}
+              </article>
+            </div>
+            <div className="grid gap-5">
+              <article className="relative rounded-[22px] bg-[#fffdf6] px-5 pb-6 pt-9 shadow-[0_3px_8px_rgba(36,58,48,0.25)] md:px-8">
+                <h2 className="absolute -top-5 left-1/2 m-0 w-[240px] -translate-x-1/2 rounded-[24px] bg-[#91b779] py-2 text-center text-xl text-white md:w-[320px]">Catatan untukmu</h2>
+                <p className="m-0 text-justify text-[15px] font-semibold leading-[1.6] md:text-lg">
+                  {moodNote}
+                </p>
+              </article>
+              <button className="min-h-12 w-full cursor-pointer rounded-[18px] bg-[#07816d] px-5 text-base font-semibold text-white transition-colors hover:bg-[#075f50] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#075746] md:min-h-[50px] md:text-lg" onClick={() => go("screening")}>
+                Lanjut ke skrining stress
+              </button>
+            </div>
+          </div>
         </div>
-        <article className="relative z-10 mt-[86px] w-full max-w-[262px] rounded-[18px] bg-[#fffdf6] px-6 pb-4 pt-5 shadow-[0_3px_8px_rgba(36,58,48,0.45)] md:mt-10 md:max-w-[540px] md:px-12">
-          <h2 className="absolute -top-7 left-1/2 m-0 w-[208px] -translate-x-1/2 rounded-[22px] bg-[#91b779] py-2 text-center text-[17px] text-white md:w-[300px] md:text-xl">Your mood today</h2>
-          {[
-            [moodOptions.find(([name]) => name === mood)?.[1], mood],
-            [faBed, `${sleep} jam`],
-            [faBrain, stress < 35 ? "Rendah" : stress < 70 ? "Sedang" : "Tinggi"],
-          ].map(([icon, value]) => (
-            <p key={value} className="m-0 grid min-h-[48px] grid-cols-[54px_24px_1fr] items-center text-[20px]">
-              <Icon icon={icon} className="text-[34px] text-[#087460]" /> <span>:</span> <b>{value}</b>
-            </p>
-          ))}
-        </article>
-        <article className="relative z-10 mt-11 w-full max-w-[330px] rounded-[22px] bg-[#fffdf6] px-4 pb-7 pt-10 shadow-[0_3px_8px_rgba(36,58,48,0.45)] md:max-w-[650px] md:px-10">
-          <h2 className="absolute -top-6 left-1/2 m-0 w-[270px] -translate-x-1/2 rounded-[24px] bg-[#91b779] py-2 text-center text-[22px] text-white md:w-[360px]">Note for you</h2>
-          <p className="m-0 text-justify text-[15px] font-semibold leading-[1.55] md:text-lg">
-            Hari ini cukup baik, suasana hati stabil. Tugas kuliah lancar dan
-            tidak terlalu banyak pikiran. Semoga besok tetap baik!
-          </p>
-        </article>
-        <button className="relative z-10 mt-auto min-h-[32px] w-[218px] cursor-pointer rounded-[18px] bg-[#07816d] px-5 text-[15px] font-semibold text-white hover:bg-[#075f50] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#075746] md:mt-8 md:min-h-11 md:w-[280px] md:text-lg" onClick={() => go("screening")}>
-          Next skrining stress ---&gt;
-        </button>
       </section>
     );
   return (
-    <section className="relative min-h-[calc(100svh-74px)] overflow-hidden bg-[#e6f3e4] px-3 pb-4 pt-4 font-['Poppins'] text-[#174d3f] md:grid md:min-h-screen md:grid-cols-[0.85fr_1.15fr] md:grid-rows-[auto_auto_1fr_auto] md:gap-x-7 md:px-12 md:py-9">
+    <section className="relative min-h-[calc(100svh-74px)] overflow-hidden bg-[#e6f3e4] px-3 pb-6 pt-4 font-['Poppins'] text-[#174d3f] md:min-h-screen lg:px-10 lg:py-8">
       <img src="/assets/pic/pic-62.png" alt="" aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-45" />
-      <button className="relative z-10 flex min-h-11 items-center gap-3 px-4 text-[20px] font-semibold md:col-span-2 md:text-[27px]" onClick={() => go("home")}>
-        <Icon icon={faArrowLeft} /> Mood Tracker
-      </button>
-      <img className="relative z-10 mx-auto mt-1 block w-[110px] object-contain md:col-start-1 md:mt-6 md:w-[150px]" src="/assets/pic/pic-26.png" alt="" />
-      <p className="relative z-10 mx-auto -mt-1 w-[338px] rounded-[32px] bg-[#b8d2aa]/80 py-2 text-center text-[14px] leading-[1.35] text-[#174d3f] md:col-start-1 md:row-start-3 md:mt-2 md:w-full md:max-w-[440px] md:text-lg">
-        Hai, Ramadhani
-        <br />
-        Septhea Dwi Putri
-        <br />
-        <b>Yuk, cek mood kamu hari ini!</b>
-      </p>
-      <div className="relative z-10 mt-3 rounded-[24px] bg-[#fffdf6] pb-4 pt-8 md:col-start-1 md:row-start-4 md:mt-5 md:px-5 md:pb-7">
-        <h2 className="absolute left-0 top-0 m-0 w-[150px] rounded-[20px] bg-[#91b779] py-1 text-center text-[17px] font-medium text-white">Mood</h2>
-        <div className="grid grid-cols-5 gap-1 px-6 md:gap-3">
-          {moodOptions.map(([m, icon, c]) => (
+      <div className="relative z-10 mx-auto w-full max-w-[1120px] lg:flex lg:min-h-[calc(100svh-4rem)] lg:flex-col">
+        <button className="flex min-h-11 items-center gap-3 px-1 text-xl font-semibold hover:text-[#087460] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460] md:text-2xl" onClick={() => go("home")}>
+          <Icon icon={faArrowLeft} aria-hidden="true" /> Mood Tracker
+        </button>
+        <div className="mt-2 grid gap-4 xl:mt-5 xl:flex-1 xl:content-center xl:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] xl:items-start xl:gap-6">
+          <div className="grid gap-3">
+            <div className="text-center">
+              <img className="mx-auto w-[110px] object-contain md:w-[150px]" src="/assets/pic/pic-26.png" alt="" />
+              <p className="mx-auto mt-1 w-full max-w-[390px] rounded-[32px] bg-[#b8d2aa]/80 px-5 py-3 text-[14px] leading-[1.4] md:text-lg">
+                Hai, {first}
+                <br />
+                {rest}
+                <br />
+                <b>Yuk, cek mood kamu hari ini!</b>
+              </p>
+            </div>
+            <div className="relative rounded-[24px] bg-[#fffdf6] pb-4 pt-10 shadow-[0_4px_14px_rgba(36,58,48,0.10)] md:px-3 lg:px-4">
+              <h2 className="absolute left-0 top-0 m-0 w-[150px] rounded-[20px] bg-[#91b779] py-1 text-center text-[17px] font-medium text-white">Mood</h2>
+              <div className="grid grid-cols-5 gap-0.5 px-2 md:gap-2 lg:px-3">
+                {moodOptions.map(([m, image]) => (
+                  <button
+                    key={m}
+                    aria-label={m}
+                    aria-pressed={mood === m}
+                    className={`flex min-w-0 cursor-pointer flex-col items-center gap-0.5 rounded-xl py-1 text-[10px] transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#087460] md:gap-1 md:text-sm ${mood === m ? "bg-[#dcebd2]" : ""}`}
+                    onClick={() => setMood(m)}
+                  >
+                    <span className="grid size-[42px] place-items-center overflow-hidden rounded-full md:size-[48px]"><img src={image} alt="" width="48" height="48" className="size-full object-contain" /></span>
+                    <span className="max-w-full truncate">{m === "Stressed" ? "Stress" : m}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="grid gap-4">
+            <div className="grid grid-cols-2 gap-3 md:gap-4">
+              <label className="grid min-h-[100px] grid-cols-[48px_1fr] items-center rounded-[14px] border border-[#718779] bg-[#fffdf6] px-3 py-3 shadow-[0_2px_5px_rgba(36,58,48,0.25)] lg:min-h-[120px] lg:p-5">
+                <Icon icon={faBed} aria-hidden="true" className="text-[38px] text-[#087460]" />
+                <span className="text-center text-[13px] font-semibold md:text-lg">Kualitas<br />tidur</span>
+                <input
+                  type="number"
+                  min="1"
+                  max="12"
+                  value={sleep}
+                  onChange={(e) => setSleep(e.target.value)}
+                  placeholder="Ketik disini jam tidur"
+                  aria-label="Kualitas tidur dalam jam"
+                  className="col-span-2 mt-2 h-9 rounded-[18px] border-0 bg-[#cedebf] px-3 text-[11px] outline-none focus-visible:ring-2 focus-visible:ring-[#087460] md:h-10 md:text-sm"
+                />
+              </label>
+              <label className="grid min-h-[100px] grid-cols-[48px_1fr] items-center rounded-[14px] border border-[#718779] bg-[#fffdf6] px-3 py-3 shadow-[0_2px_5px_rgba(36,58,48,0.25)] lg:min-h-[120px] lg:p-5">
+                <Icon icon={faBrain} aria-hidden="true" className="text-[38px] text-[#087460]" />
+                <span className="text-center text-[12px] font-semibold md:text-lg">Tingkat beban<br />mental/stres</span>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={stress}
+                  onChange={(e) => setStress(e.target.value)}
+                  placeholder="Ketik disini berapa %"
+                  aria-label="Tingkat beban mental atau stres dalam persen"
+                  className="col-span-2 mt-2 h-9 rounded-[18px] border-0 bg-[#cedebf] px-3 text-[11px] outline-none focus-visible:ring-2 focus-visible:ring-[#087460] md:h-10 md:text-sm"
+                />
+              </label>
+            </div>
+            <label className="grid grid-cols-[56px_1fr] items-center gap-2 rounded-[18px] border border-[#718779] bg-[#fffdf6] px-4 py-4 shadow-[0_3px_8px_rgba(36,58,48,0.25)] lg:p-6">
+              <Icon icon={faListCheck} aria-hidden="true" className="text-[52px] text-[#087460] lg:text-[64px]" />
+              <span className="text-center text-[17px] font-semibold md:text-[22px]">Faktor pengaruh<br />mood</span>
+              <textarea
+                placeholder="Ceritakan apa yang memengaruhi mood-mu"
+                aria-label="Faktor pengaruh mood"
+                value={influences}
+                onChange={(event) => setInfluences(event.target.value)}
+                className="col-span-2 mt-2 min-h-[86px] resize-y rounded-[18px] border-0 bg-[#cedebf] px-4 py-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[#087460] md:min-h-[110px] md:text-base"
+              />
+            </label>
             <button
-              key={m}
-              aria-label={m}
-              className={`flex cursor-pointer flex-col items-center gap-1 rounded-xl py-1 text-[11px] transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#087460] ${mood === m ? "bg-[#dcebd2]" : ""}`}
-              onClick={() => setMood(m)}
+              className="min-h-12 w-full cursor-pointer rounded-[18px] bg-[#07816d] px-5 text-base font-semibold text-white transition-colors hover:bg-[#075f50] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#075746] md:text-lg"
+              onClick={() => {
+                persist?.({ mood, sleep, stress, influences }).catch(() => {});
+                setResult(true);
+              }}
             >
-              <span className="grid size-[42px] place-items-center rounded-full border-2 border-white text-xl text-[#355f4f] shadow" style={{ backgroundColor: c }}><Icon icon={icon} /></span>
-              <span>{m}</span>
+              Lihat hasil mood
             </button>
-          ))}
+          </div>
         </div>
       </div>
-      <div className="relative z-10 mt-9 grid grid-cols-2 gap-3 md:col-start-2 md:row-start-2 md:mt-6 md:gap-5">
-        <label className="grid min-h-[94px] grid-cols-[52px_1fr] items-center rounded-[12px] border border-[#718779] bg-[#fffdf6] px-2 py-2 shadow-[0_2px_5px_rgba(36,58,48,0.35)] md:min-h-[160px] md:p-5">
-          <Icon icon={faBed} className="text-[38px] text-[#087460]" />
-          <span className="text-center text-[13px] font-semibold md:text-lg">Kualitas<br />tidur</span>
-          <input
-            type="number"
-            min="1"
-            max="12"
-            value={sleep}
-            onChange={(e) => setSleep(e.target.value)}
-            placeholder="Ketik disini jam tidur"
-            className="col-span-2 h-[28px] rounded-[18px] border-0 bg-[#cedebf] px-3 text-[9px] outline-none focus-visible:ring-2 focus-visible:ring-[#087460] md:h-10 md:text-sm"
-          />
-        </label>
-        <label className="grid min-h-[94px] grid-cols-[52px_1fr] items-center rounded-[12px] border border-[#718779] bg-[#fffdf6] px-2 py-2 shadow-[0_2px_5px_rgba(36,58,48,0.35)] md:min-h-[160px] md:p-5">
-          <Icon icon={faBrain} className="text-[38px] text-[#087460]" />
-          <span className="text-center text-[11px] font-semibold md:text-lg">Tingkat beban<br />mental/stres</span>
-          <input
-            type="number"
-            min="0"
-            max="100"
-            value={stress}
-            onChange={(e) => setStress(e.target.value)}
-            placeholder="Ketik disini berapa %"
-            className="col-span-2 h-[28px] rounded-[18px] border-0 bg-[#cedebf] px-3 text-[9px] outline-none focus-visible:ring-2 focus-visible:ring-[#087460] md:h-10 md:text-sm"
-          />
-        </label>
-      </div>
-      <label className="relative z-10 mx-auto mt-8 grid min-h-[143px] w-[256px] grid-cols-[72px_1fr] items-center rounded-[18px] border border-[#718779] bg-[#fffdf6] px-4 py-3 shadow-[0_3px_8px_rgba(36,58,48,0.45)] md:col-start-2 md:row-start-3 md:mt-5 md:min-h-[230px] md:w-full md:max-w-[600px] md:p-8">
-        <Icon icon={faListCheck} className="text-[58px] text-[#087460] md:text-[72px]" />
-        <span className="text-center text-[17px] font-semibold md:text-[24px]">Faktor pengaruh<br />mood</span>
-        <textarea
-          placeholder="Ketik disini"
-          value={influences}
-          onChange={(event) => setInfluences(event.target.value)}
-          className="col-span-2 min-h-[42px] resize-none rounded-[22px] border-0 bg-[#cedebf] px-5 py-3 text-[11px] outline-none focus-visible:ring-2 focus-visible:ring-[#087460] md:min-h-[90px] md:text-base"
-        />
-      </label>
-      <button
-        className="relative z-10 ml-auto mt-[44px] block min-h-[30px] w-[187px] cursor-pointer rounded-[18px] bg-[#07816d] px-4 text-[19px] font-semibold text-white hover:bg-[#075f50] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#075746] md:col-start-2 md:row-start-4 md:mt-5 md:min-h-11 md:w-[240px]"
-        onClick={() => {
-          persist?.({ mood, sleep, stress, influences }).catch(() => {});
-          setResult(true);
-        }}
-      >
-        Next ---&gt;&gt;&gt;
-      </button>
     </section>
   );
 }
-function Screening({ go, persist }) {
+function Screening({ go, user, persist }) {
+  const { first, rest } = splitName(user?.name);
   const qs = [
     "Kurang tertarik atau kurang menikmati melakukan sesuatu.",
     "Merasa sedih, tertekan, atau putus asa.",
@@ -1734,14 +2010,14 @@ function Screening({ go, persist }) {
           <div className="text-center">
             <img className="mx-auto w-[110px] md:w-[240px]" src="/assets/pic/pic-30.png" alt="Maskot ReMind" />
             <p className="mt-1 text-[16px] font-semibold leading-[21px] md:text-[24px] md:leading-8">
-          Hai, Ramadhani
+          Hai, {first}
           <br />
-          Septhea Dwi Putri
+          {rest}
           <br />
-              <b className="text-white [text-shadow:0_2px_4px_rgba(31,68,45,.48)]">Yuk, cek kondisi mentalmu!</b>
+              <b className="text-[#075746]">Yuk, cek kondisi mentalmu!</b>
             </p>
           </div>
-          <article className="mx-auto mt-3 w-full max-w-[320px] rounded-[43px] bg-[#80aa8b] px-7 pb-[42px] pt-[42px] text-white md:mt-0 md:max-w-[510px] md:px-12 md:py-12">
+          <article className="mx-auto mt-3 w-full max-w-[320px] rounded-[43px] bg-[#3d7359] px-7 pb-[42px] pt-[42px] text-white md:mt-0 md:max-w-[510px] md:px-12 md:py-12">
             <h2 className="flex items-center gap-3 text-[16px] font-bold leading-6 [text-shadow:0_2px_2px_rgba(0,0,0,.25)] md:text-[22px]">
               <Icon icon={faListCheck} className="text-[44px]" />
               Skrining kesehatan mental menggunakan PHQ-4
@@ -1767,10 +2043,10 @@ function Screening({ go, persist }) {
       <section className="mx-auto min-h-[calc(100dvh-69px)] w-full max-w-[1120px] bg-[#d3edda] px-6 pb-14 pt-2 text-[#174f38] md:min-h-screen md:px-12 md:py-9">
         <ScreeningTitle label="Hasil skrining" />
         <img className="mx-auto mt-5 w-[128px] md:mt-0 md:w-[180px]" src="/assets/pic/pic-30.png" alt="Maskot ReMind" />
-        <h1 className="-mt-1 text-center text-[28px] font-bold text-white [text-shadow:0_3px_5px_rgba(28,73,50,.55)] md:text-4xl">Hasil skrining</h1>
+        <h1 className="-mt-1 text-center text-[28px] font-bold text-[#075746] md:text-4xl">Hasil skrining</h1>
         <div className="mx-auto mt-9 grid max-w-[340px] grid-cols-2 gap-6 md:max-w-[620px] md:gap-10">
           <article className="flex min-h-[158px] flex-col items-center justify-center rounded-[38px] bg-[#f4faef] text-center">
-            <Icon icon={faFaceSadTear} className="text-[47px] text-[#e5b04d]" aria-hidden="true" />
+            <img src="/assets/mood-sad-circle.png" alt="" aria-hidden="true" width="47" height="47" className="size-[47px] object-contain" />
             <span className="mt-1 text-[15px] leading-5">
               Depresi
               <br />
@@ -1792,7 +2068,7 @@ function Screening({ go, persist }) {
           <Icon icon={faCircleCheck} className="mt-0.5 shrink-0 text-[16px] text-[#138b78]" />
           <span>Penting untuk diketahui hasil ini merupakan skrining awal dan bukan diagnosis. Jika hasil skrining membuatmu khawatir atau kamu merasa kondisi ini mengganggu aktivitas sehari-hari, pertimbangkan untuk berbicara dengan tenaga kesehatan atau orang yang kamu percaya.</span>
         </p>
-        <button className="mx-auto mt-5 flex min-h-[47px] w-full max-w-[230px] items-center justify-center gap-2 rounded-full bg-[#9cc17e] text-[17px] font-bold text-white [text-shadow:0_2px_2px_rgba(0,0,0,.28)] hover:bg-[#87ad69] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#087460] md:max-w-[300px] md:text-xl" onClick={() => go("home")}>
+        <button className="mx-auto mt-5 flex min-h-[47px] w-full max-w-[230px] items-center justify-center gap-2 rounded-full bg-[#2f7d66] text-[17px] font-bold text-white hover:bg-[#286b57] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#087460] md:max-w-[300px] md:text-xl" onClick={() => go("home")}>
           <Icon icon={faHouse} /> Kembali ke beranda
         </button>
       </section>
@@ -1826,7 +2102,7 @@ function Screening({ go, persist }) {
           ))}
         </div>
         <button
-          className="mx-auto mt-[37px] flex min-h-[47px] w-[230px] items-center justify-center gap-5 rounded-full bg-[#9cc17e] text-[19px] font-bold text-white [text-shadow:0_2px_2px_rgba(0,0,0,.3)] enabled:hover:bg-[#87ad69] disabled:cursor-not-allowed disabled:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#087460] md:mt-8"
+          className="mx-auto mt-[37px] flex min-h-[47px] w-[230px] items-center justify-center gap-5 rounded-full bg-[#2f7d66] text-[19px] font-bold text-white enabled:hover:bg-[#286b57] disabled:cursor-not-allowed disabled:opacity-55 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#087460] md:mt-8"
           disabled={selected === null}
           onClick={() => {
             const nextAnswers = [...ans, selected];
@@ -1842,329 +2118,654 @@ function Screening({ go, persist }) {
     </section>
   );
 }
-function SOS({ go }) {
+function SosMap() {
+  return (
+    <div className="relative z-10 mx-auto my-4 w-[78%] overflow-hidden rounded-[10px] border-[5px] border-white bg-[#e8e2d9] shadow-sm md:w-[min(100%,480px)]">
+      <svg
+        viewBox="0 0 320 180"
+        role="img"
+        aria-label="Peta perjalanan ambulans menuju lokasi"
+        className="block h-auto w-full"
+      >
+        <rect width="320" height="180" fill="#e9e3da" />
+        <path d="M0 22 L110 22 L150 70 L150 180 L0 180 Z" fill="#d8e5c9" />
+        <path d="M250 0 L320 0 L320 70 L280 95 L250 70 Z" fill="#d8e5c9" />
+        <path d="M0 126 C55 118 84 142 126 153 C170 164 210 151 242 132 L320 124 L320 180 L0 180 Z" fill="#c6dcc0" />
+        <path d="M-10 155 C50 138 102 168 160 166 C222 164 258 141 330 150" fill="none" stroke="#a8cfe8" strokeWidth="16" />
+        <g fill="none" stroke="#ffffff" strokeLinecap="round">
+          <path d="M-10 58 L110 58 L168 116 L330 116" strokeWidth="12" />
+          <path d="M260 -10 L260 76 L232 108 L232 190" strokeWidth="11" />
+          <path d="M-10 102 L80 102 L126 58" strokeWidth="9" />
+          <path d="M320 36 L280 36 L232 84" strokeWidth="9" />
+        </g>
+        <g fill="none" stroke="#f4efe6" strokeWidth="3">
+          <path d="M-10 58 L110 58 L168 116 L330 116" />
+          <path d="M260 -10 L260 76 L232 108 L232 190" />
+        </g>
+        <path d="M126 94 L160 88 L186 104 L212 72 L238 58" fill="none" stroke="#d64b45" strokeWidth="3" strokeDasharray="5 4" />
+        <image
+          href="/assets/pic/ambulance-map.svg"
+          x="146"
+          y="58"
+          width="88"
+          height="66"
+          aria-hidden="true"
+        />
+        <g transform="translate(230 52)">
+          <path d="M0 0 C-9 0 -16 7 -16 16 C-16 28 0 42 0 42 C0 42 16 28 16 16 C16 7 9 0 0 0 Z" fill="#c72c2c" />
+          <circle cx="0" cy="16" r="5.5" fill="#ffffff" />
+        </g>
+        <g fill="#95b58c">
+          <circle cx="48" cy="40" r="7" />
+          <circle cx="62" cy="48" r="5" />
+          <circle cx="278" cy="150" r="8" />
+          <circle cx="294" cy="142" r="5" />
+        </g>
+      </svg>
+      <span className="absolute bottom-2 left-3 rounded bg-white px-1.5 py-0.5 text-[10px] font-bold text-[#174d3f]">
+        AMBULANS
+      </span>
+    </div>
+  );
+}
+function CallDialog({ target, close }) {
+  const [seconds, setSeconds] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setSeconds((value) => value + 1), 1000);
+    return () => clearInterval(timer);
+  }, []);
+  useEffect(() => {
+    const escape = (event) => {
+      if (event.key === "Escape") close();
+    };
+    document.addEventListener("keydown", escape);
+    return () => document.removeEventListener("keydown", escape);
+  }, [close]);
+  const time = `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
+  return (
+    <div className="fixed inset-0 z-[120] flex flex-col items-center justify-between overflow-hidden bg-[linear-gradient(165deg,#075746,#0f8a73)] px-6 pb-10 pt-8 text-center font-['Poppins'] text-white">
+      <div>
+        <p className="m-0 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/65">
+          Panggilan darurat · simulasi
+        </p>
+        <div className="relative mx-auto mt-10 grid size-[118px] place-items-center">
+          <span
+            aria-hidden="true"
+            className="absolute inset-0 animate-ping rounded-full bg-white/15"
+          />
+          <span
+            aria-hidden="true"
+            className="absolute inset-2 rounded-full bg-white/10"
+          />
+          <span className="relative grid size-[88px] place-items-center overflow-hidden rounded-full border-4 border-white bg-[#2f7d66] text-4xl">
+            <Icon icon={faUser} aria-hidden="true" />
+          </span>
+        </div>
+        <h1 className="mb-1 mt-7 text-2xl font-semibold">{target.name}</h1>
+        <p className="m-0 text-sm text-white/80">{target.phone}</p>
+        <p className="mt-4 text-sm font-medium text-white/90" role="status" aria-live="polite">
+          Memanggil · {time}
+        </p>
+      </div>
+      <div className="w-full max-w-[360px]">
+        <p className="mx-auto mb-5 max-w-[300px] text-xs leading-5 text-white/65">
+          Ini hanya tampilan simulasi. Panggilan tidak benar-benar tersambung ke layanan darurat.
+        </p>
+        <button
+          type="button"
+          onClick={close}
+          aria-label="Akhiri panggilan"
+          className="mx-auto grid size-16 cursor-pointer place-items-center rounded-full bg-[#e45d68] text-2xl text-white shadow-[0_10px_25px_#00000033] transition-colors hover:bg-[#cf4a55] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+        >
+          <Icon icon={faPhoneSlash} aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          onClick={close}
+          className="mx-auto mt-3 block min-h-11 px-4 text-sm font-semibold text-white/80 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+        >
+          Kembali
+        </button>
+      </div>
+    </div>
+  );
+}
+function SOS({ go, contacts = [], tasks = [] }) {
   const [stage, setStage] = useState("home");
   const [seconds, setSeconds] = useState(272);
+  const [contactQuery, setContactQuery] = useState("");
+  const [callTarget, setCallTarget] = useState(null);
+  const [breathing, setBreathing] = useState(false);
+  const [breathTick, setBreathTick] = useState(0);
   useEffect(() => {
     if (stage !== "active" || seconds <= 0) return;
     const timer = setInterval(() => setSeconds((value) => value - 1), 1000);
     return () => clearInterval(timer);
   }, [stage, seconds]);
+  useEffect(() => {
+    if (!breathing) return;
+    const timer = setInterval(() => setBreathTick((value) => value + 1), 1000);
+    return () => clearInterval(timer);
+  }, [breathing]);
+  useEffect(() => {
+    if (stage !== "sent") return;
+    const escape = (event) => {
+      if (event.key === "Escape") setStage("choice");
+    };
+    document.addEventListener("keydown", escape);
+    return () => document.removeEventListener("keydown", escape);
+  }, [stage]);
   const back = () => {
     if (stage === "home") go("home");
     else if (["choice", "sent"].includes(stage)) setStage("home");
     else if (["detail", "contacts"].includes(stage)) setStage("active");
     else setStage("choice");
   };
+  const phase = breathTick % 19;
+  const breathState =
+    phase < 4
+      ? ["Tarik napas", 4 - phase]
+      : phase < 11
+        ? ["Tahan napas", 11 - phase]
+        : ["Hembuskan napas", 19 - phase];
+  const pageClass =
+    "relative min-h-[calc(100dvh-74px)] overflow-hidden bg-[#d9efdf] px-[15px] pb-[86px] pt-2.5 font-['Poppins'] text-[#174d3f] lg:min-h-screen lg:px-16 lg:pb-14 lg:pt-9";
+  const callDialog = callTarget ? (
+    <CallDialog target={callTarget} close={() => setCallTarget(null)} />
+  ) : null;
   const top = (title = "") => (
-    <div className="sos-top">
-      <button onClick={back} aria-label="Kembali">
-        <Icon icon={faArrowLeft} />
+    <div className="relative z-10 mx-auto grid min-h-11 w-full max-w-[1080px] grid-cols-[44px_1fr_44px] items-center gap-2">
+      <button
+        type="button"
+        onClick={back}
+        aria-label="Kembali"
+        className="grid size-11 cursor-pointer place-items-center rounded-full text-xl text-[#619781] transition-colors hover:bg-white/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460]"
+      >
+        <Icon icon={faArrowLeft} aria-hidden="true" />
       </button>
-      {title && <h1>{title}</h1>}
-      <span>
-        <Icon icon={faMagnifyingGlass} />
-        <Icon icon={faMusic} />
-      </span>
+      {title && <h1 className="m-0 text-center text-base font-semibold md:text-2xl">{title}</h1>}
+      <NotificationBell tasks={tasks} go={go} variant="ghost" className="justify-self-end" />
     </div>
   );
   if (stage === "breathing")
     return (
-      <section className="sos-page breathing-page">
+      <section className={`${pageClass} text-center`}>
+        <img
+          src="/assets/pic/pic-62.png"
+          alt=""
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-45"
+        />
         {top("Teknik pernapasan")}
-        <p>
+        <p className="relative z-10 mx-auto mt-2 max-w-[320px] text-sm leading-6">
           Tarik napas pelan-pelan
           <br />
           agar pikiran juga ikut tenang
         </p>
-        <img src="/assets/pic/pic-42.png" alt="" />
-        <article>
-          <h2>pernapasan 4-7-8</h2>
-          <p>Teknik sederhana untuk menenangkan pikiran dan tubuh</p>
-          <div>
+        <img
+          src="/assets/pic/pic-42.png"
+          alt=""
+          aria-hidden="true"
+          className="relative z-10 mx-auto my-2 h-[118px] w-[150px] object-contain md:h-[135px] md:w-[170px]"
+        />
+        <article className="relative z-10 mx-auto mt-2 w-full max-w-[760px] rounded-[18px] bg-[#c7d9b6] px-3 py-4 text-left md:rounded-3xl md:p-6">
+          <h2 className="m-0 text-sm font-semibold md:text-lg">Pernapasan 4-7-8</h2>
+          <p className="mb-6 mt-0.5 text-xs leading-5 md:text-sm">
+            Teknik sederhana untuk menenangkan pikiran dan tubuh
+          </p>
+          <div className="grid grid-cols-3 gap-1 md:gap-3">
             {[
               [faWind, "4 detik", "Tarik napas"],
               [faPause, "7 detik", "Tahan napas"],
               [faHeartPulse, "8 detik", "Hembuskan napas"],
             ].map(([icon, time, label]) => (
-              <span key={time}>
-                <Icon icon={icon} />
-                <b>{time}</b>
-                <small>{label}</small>
+              <span
+                key={time}
+                className="flex min-h-[100px] flex-col items-center justify-center rounded-[15px] bg-[#fffdf6] px-1 py-3 text-center md:min-h-[130px] md:rounded-[18px]"
+              >
+                <Icon icon={icon} aria-hidden="true" className="text-2xl text-[#668c6a]" />
+                <b className="mt-2 text-sm md:text-base">{time}</b>
+                <small className="text-[11px] md:text-xs">{label}</small>
               </span>
             ))}
           </div>
+          {breathing && (
+            <p
+              className="mt-4 rounded-xl bg-white/70 px-4 py-3 text-center text-sm font-semibold text-[#275a45]"
+              role="status"
+              aria-live="polite"
+            >
+              {breathState[0]} · {breathState[1]} detik
+            </p>
+          )}
         </article>
-        <button className="sos-main-action">Mulai sekarang</button>
+        <button
+          type="button"
+          onClick={() => {
+            setBreathTick(0);
+            setBreathing((value) => !value);
+          }}
+          className="relative z-10 mt-[70px] min-h-11 w-full max-w-[760px] cursor-pointer rounded-full bg-[#98b877] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#86a768] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#075746] md:mt-7 md:text-base"
+        >
+          {breathing ? "Hentikan latihan" : "Mulai sekarang"}
+        </button>
       </section>
     );
   if (stage === "emotional")
     return (
-      <section className="sos-page emotional-page">
+      <section className={`${pageClass} text-center`}>
+        <img
+          src="/assets/pic/pic-62.png"
+          alt=""
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-45"
+        />
         {top("Dukungan Emosional")}
-        <img src="/assets/pic/pic-31.png" alt="" />
-        <h2>
+        <img
+          src="/assets/pic/pic-31.png"
+          alt=""
+          aria-hidden="true"
+          className="relative z-10 mx-auto mb-4 mt-4 h-[110px] w-[130px] object-contain md:mb-3 md:h-[125px] md:w-[150px]"
+        />
+        <h2 className="relative z-10 mx-auto mt-1 max-w-[420px] text-[22px] font-semibold leading-[1.1] md:text-[32px]">
           Kamu tidak sendirian,
           <br />
           ada yang mendengarkan.
         </h2>
-        <p>
+        <p className="relative z-10 mx-auto mt-3 max-w-[330px] text-[13px] leading-[1.5] md:text-sm">
           Jika kamu merasa cemas, sedih,
           <br />
           atau tertekan, kamu bisa langsung
           <br />
           terhubung dengan konselor kami.
         </p>
-        <a href="tel:119">
-          <Icon icon={faPhone} /> Hubungi Konselor
-        </a>
-        <b>Tersedia 24 jam</b>
+        <button
+          type="button"
+          onClick={() =>
+            setCallTarget({ name: "Konselor ReMind", phone: "119" })
+          }
+          className="relative z-10 mx-auto mt-6 flex min-h-[46px] w-full max-w-[430px] cursor-pointer items-center justify-center gap-2.5 rounded-full bg-[#2f7d66] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#286b57] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#075746] md:mt-7"
+        >
+          <Icon icon={faPhone} aria-hidden="true" /> Hubungi Konselor
+        </button>
+        <b className="relative z-10 mt-3 block text-xs font-semibold md:text-sm">
+          Tersedia 24 jam
+        </b>
+        {callDialog}
       </section>
     );
   if (stage === "contacts")
     return (
-      <section className="sos-page sos-contacts-page">
+      <section className={pageClass}>
+        <img
+          src="/assets/pic/pic-62.png"
+          alt=""
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-45"
+        />
         {top("Kontak darurat")}
-        <label>
-          <Icon icon={faMagnifyingGlass} />
-          <input aria-label="Cari kontak" />
-          <button>
-            <Icon icon={faPlus} />
+        <label className="relative z-10 mx-auto mt-4 flex min-h-11 w-full max-w-[760px] items-center gap-2 rounded-lg bg-[#fffdf6] px-3 py-1 text-[#174d3f]">
+          <Icon icon={faMagnifyingGlass} aria-hidden="true" className="text-[#5f927f]" />
+          <input
+            aria-label="Cari kontak"
+            placeholder="Cari kontak"
+            value={contactQuery}
+            onChange={(event) => setContactQuery(event.target.value)}
+            className="min-h-9 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[#6f8d83]"
+          />
+          <button
+            type="button"
+            onClick={() => go("contacts")}
+            aria-label="Tambah kontak darurat"
+            className="grid size-11 shrink-0 cursor-pointer place-items-center rounded-full bg-[#2f7d66] text-sm text-white transition-colors hover:bg-[#286b57] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#075746]"
+          >
+            <Icon icon={faPlus} aria-hidden="true" />
           </button>
         </label>
-        <h2>Kontak utama</h2>
-        {[
-          ["Natasha", "+6282232265433"],
-          ["Jeno", "+6213445326117"],
-          ["Carmen", "+6282253447129"],
-          ["Keunho", "+6282283345627"],
-        ].map(([name, phone]) => (
-          <article key={name}>
-            <Icon icon={faUser} />
-            <span>
-              <b>{name}</b>
-              <small>{phone}</small>
+        <h2 className="relative z-10 mx-auto mt-4 w-full max-w-[760px] text-xs font-bold uppercase tracking-wide md:text-sm">
+          Kontak utama
+        </h2>
+        {contacts.length === 0 && (
+          <p className="relative z-10 mx-auto mt-3 max-w-[760px] rounded-[13px] bg-[#fffdf6] px-4 py-4 text-sm">
+            Belum ada kontak darurat. Tambahkan dari halaman Kelola Profil.
+          </p>
+        )}
+        {contacts.length > 0 &&
+          contacts
+            .filter((contact) =>
+              `${contact.name} ${contact.phone}`
+                .toLowerCase()
+                .includes(contactQuery.toLowerCase()),
+            )
+            .map((contact) => (
+          <article
+            key={contact.id || contact.phone}
+            className="relative z-10 mx-auto mt-2.5 grid w-full max-w-[760px] grid-cols-[40px_1fr_44px] items-center gap-2 rounded-[13px] bg-[#fffdf6] px-3 py-2.5 md:mt-3.5 md:gap-3 md:rounded-[18px] md:p-[18px]"
+          >
+            <Icon
+              icon={faUser}
+              aria-hidden="true"
+              className="grid size-9 place-items-center rounded-full bg-[#2f7d66] p-2 text-sm text-white md:size-10"
+            />
+            <span className="grid min-w-0">
+              <b className="truncate text-sm md:text-base">{contact.name}</b>
+              <small className="truncate text-xs text-[#4f6b60]">{contact.phone}</small>
             </span>
-            <a href={`tel:${phone}`} aria-label={`Hubungi ${name}`}>
-              <Icon icon={faPhone} />
-            </a>
+            <button
+              type="button"
+              onClick={() =>
+                setCallTarget({ name: contact.name, phone: contact.phone })
+              }
+              aria-label={`Hubungi ${contact.name}`}
+              className="grid size-11 cursor-pointer place-items-center rounded-full bg-[#2f7d66] text-sm text-white transition-colors hover:bg-[#286b57] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#075746]"
+            >
+              <Icon icon={faPhone} aria-hidden="true" />
+            </button>
           </article>
         ))}
+        {contacts.length > 0 &&
+          !contacts.some((contact) =>
+            `${contact.name} ${contact.phone}`
+              .toLowerCase()
+              .includes(contactQuery.toLowerCase()),
+          ) && (
+            <p className="relative z-10 mx-auto mt-3 max-w-[760px] rounded-[13px] bg-[#fffdf6] px-4 py-4 text-sm">
+              Kontak tidak ditemukan. Coba kata kunci lain.
+            </p>
+          )}
+        {callDialog}
       </section>
     );
   if (stage === "detail")
     return (
-      <section className="sos-page sos-detail-page">
+      <section className={`${pageClass} md:px-8`}>
+        <img
+          src="/assets/pic/pic-62.png"
+          alt=""
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-45"
+        />
         {top("Detail SOS")}
-        <article className="status-card">
-          <Icon icon={faLocationDot} />
-          <span>
-            <b>Dalam perjalanan</b>
-            <small>Tim bantuan sedang dalam perjalanan</small>
+        <article className="relative z-10 mx-auto mt-3 grid w-full max-w-[760px] grid-cols-[40px_1fr] items-center gap-2 rounded-[14px] bg-[#fffdf6] p-3 text-left md:mt-3.5 md:grid-cols-[46px_1fr] md:gap-3 md:rounded-[18px] md:p-[18px]">
+          <Icon icon={faLocationDot} aria-hidden="true" className="text-2xl text-[#58a58c]" />
+          <span className="grid">
+            <b className="text-sm md:text-base">Dalam perjalanan</b>
+            <small className="text-xs text-[#4f6b60]">
+              Tim bantuan sedang dalam perjalanan
+            </small>
           </span>
         </article>
-        <div className="map-placeholder">
-          <i />
-          <b>AMBULANS</b>
-          <span />
-        </div>
-        <article>
-          <Icon icon={faHeartPulse} />
-          <span>
-            <b>Tim medis</b>
-            <small>Ambulans RS Umum</small>
+        <SosMap />
+        <article className="relative z-10 mx-auto mt-3 grid w-full max-w-[760px] grid-cols-[40px_1fr_44px] items-center gap-2 rounded-[14px] bg-[#fffdf6] p-3 text-left md:mt-3.5 md:grid-cols-[46px_1fr_auto] md:gap-3 md:rounded-[18px] md:p-[18px]">
+          <Icon icon={faHeartPulse} aria-hidden="true" className="text-2xl text-[#58a58c]" />
+          <span className="grid min-w-0">
+            <b className="text-sm md:text-base">Tim medis</b>
+            <small className="text-xs text-[#4f6b60]">Ambulans RS Umum</small>
           </span>
-          <a href="tel:119">
-            <Icon icon={faPhone} />
-          </a>
+          <button
+            type="button"
+            onClick={() =>
+              setCallTarget({ name: "Tim medis", phone: "119" })
+            }
+            aria-label="Hubungi tim medis"
+            className="grid size-11 cursor-pointer place-items-center rounded-full bg-[#2f7d66] text-sm text-white transition-colors hover:bg-[#286b57] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#075746]"
+          >
+            <Icon icon={faPhone} aria-hidden="true" />
+          </button>
         </article>
-        <article>
-          <Icon icon={faLocationDot} />
-          <span>
-            <b>Lokasimu saat ini:</b>
-            <small>
+        <article className="relative z-10 mx-auto mt-3 grid w-full max-w-[760px] grid-cols-[40px_1fr] items-center gap-2 rounded-[14px] bg-[#fffdf6] p-3 text-left md:mt-3.5 md:grid-cols-[46px_1fr] md:gap-3 md:rounded-[18px] md:p-[18px]">
+          <Icon icon={faLocationDot} aria-hidden="true" className="text-2xl text-[#58a58c]" />
+          <span className="grid">
+            <b className="text-sm md:text-base">Lokasimu saat ini:</b>
+            <small className="text-xs leading-5 text-[#4f6b60]">
               Jl. Srijaya Negara No.21, Palembang
               <br />
               -2.9731, 104.7556
             </small>
           </span>
         </article>
-        <article className="hold-card">
-          <img src="/assets/pic/pic-38.png" alt="" aria-hidden="true" />
-          <span>
-            <b>Hold on Tight.</b>
-            <small>Kami sedang dalam perjalanan menuju kamu &lt;3</small>
+        <article className="relative z-10 mx-auto mt-3 grid w-full max-w-[760px] grid-cols-[40px_1fr] items-center gap-3 rounded-[14px] bg-[#dff3e6] p-3 text-left md:mt-3.5 md:grid-cols-[46px_1fr] md:gap-3 md:rounded-[18px] md:p-[18px]">
+          <img src="/assets/pic/pic-38.png" alt="" aria-hidden="true" className="size-9 object-contain md:size-10" />
+          <span className="grid">
+            <b className="text-sm md:text-base">Hold on Tight.</b>
+            <small className="text-xs text-[#4f6b60]">
+              Kami sedang dalam perjalanan menuju kamu &lt;3
+            </small>
           </span>
         </article>
+        {callDialog}
       </section>
     );
   if (stage === "active") {
     const time = `${String(Math.floor(seconds / 60)).padStart(2, "0")}.${String(seconds % 60).padStart(2, "0")}`;
     return (
-      <section className="sos-page sos-active-page">
+      <section
+        className={`${pageClass} bg-[radial-gradient(circle_at_50%_30%,#effff1_0%,#8ed4af_48%,#1a815c_100%)] text-center`}
+      >
         {top()}
-        <strong>SOS Aktif!</strong>
-        <p>
+        <strong className="relative z-10 mt-1 inline-block rounded-lg bg-[#ff8d86] px-5 py-1.5 text-xs font-semibold text-white md:text-sm">
+          SOS Aktif!
+        </strong>
+        <p className="relative z-10 mx-auto mt-2 max-w-[320px] text-[13px] leading-6 md:text-sm">
           Tim bantuan sedang dalam
           <br />
           perjalanan menuju ke lokasimu
         </p>
-        <button className="sos-countdown" onClick={() => setStage("detail")}>
-          <b>{time}</b>
-          <small>Sisa waktu</small>
+        <button
+          type="button"
+          onClick={() => setStage("detail")}
+          className="relative z-10 mx-auto my-4 flex size-[145px] cursor-pointer flex-col items-center justify-center rounded-full border-[12px] border-white bg-[conic-gradient(#428c76_0deg_30deg,#fff_30deg)] text-[#559a86] shadow-[0_5px_15px_#315b4f4a] transition-transform hover:scale-[1.02] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#075746] md:my-5 md:size-[180px] md:border-[14px] md:bg-[#fafff8]"
+        >
+          <b className="text-[27px] leading-none md:text-[34px]">{time}</b>
+          <small className="mt-1 text-[11px] md:text-xs">Sisa waktu</small>
         </button>
-        <article className="sos-location">
-          <Icon icon={faLocationDot} />
-          <span>
-            <b>Lokasimu saat ini:</b>
-            <small>
+        <article className="relative z-10 mx-auto grid w-full max-w-[760px] grid-cols-[38px_1fr] items-center gap-2 rounded-[14px] bg-[#fffdf6] p-3 text-left md:grid-cols-[46px_1fr] md:gap-3 md:rounded-[18px] md:p-[18px]">
+          <Icon icon={faLocationDot} aria-hidden="true" className="text-2xl text-[#58a58c]" />
+          <span className="grid">
+            <b className="text-sm md:text-base">Lokasimu saat ini:</b>
+            <small className="text-xs leading-5 text-[#4f6b60]">
               Jl. Srijaya Negara No.21, Palembang
               <br />
               -2.9731, 104.7556
             </small>
           </span>
         </article>
-        <div className="sos-service-row">
-          <a href="tel:+6282281235569">
-            <img className="sos-service-icon" src="/assets/pic/pic-37.png" alt="" />
-            <b>Tim medis</b>
-            <small>+6282281235569</small>
-          </a>
-          <button onClick={() => setStage("contacts")}>
-            <img className="sos-service-icon" src="/assets/pic/pic-36.png" alt="" />
-            <b>
+        <div className="relative z-10 mx-auto my-3 grid w-full max-w-[760px] grid-cols-3 gap-1.5 md:my-4 md:gap-3">
+          <button
+            type="button"
+            onClick={() =>
+              setCallTarget({ name: "Tim medis", phone: "+6282281235569" })
+            }
+            className="flex min-h-[111px] cursor-pointer flex-col items-center justify-center rounded-[22px] bg-[#fffdf6] px-2 py-3 text-[#265647] transition-colors hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#075746] md:min-h-[130px] md:p-4"
+          >
+            <img src="/assets/pic/pic-37.png" alt="" aria-hidden="true" className="size-11 object-contain" />
+            <b className="mt-2 text-[11px] md:text-sm">Tim medis</b>
+            <small className="text-[10px] md:text-xs">+6282281235569</small>
+          </button>
+          <button
+            type="button"
+            onClick={() => setStage("contacts")}
+            className="flex min-h-[111px] cursor-pointer flex-col items-center justify-center rounded-[22px] bg-[#fffdf6] px-2 py-3 text-[#265647] transition-colors hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#075746] md:min-h-[130px] md:p-4"
+          >
+            <img src="/assets/pic/pic-36.png" alt="" aria-hidden="true" className="size-11 object-contain" />
+            <b className="mt-2 text-[11px] leading-tight md:text-sm">
               Orang
               <br />
               Terdekat
             </b>
           </button>
-          <a href="tel:119">
-            <img className="sos-service-icon" src="/assets/pic/pic-66.png" alt="" />
-            <b>Ambulans</b>
-            <small>119</small>
-          </a>
+          <button
+            type="button"
+            onClick={() => setCallTarget({ name: "Ambulans", phone: "119" })}
+            className="flex min-h-[111px] cursor-pointer flex-col items-center justify-center rounded-[22px] bg-[#fffdf6] px-2 py-3 text-[#265647] transition-colors hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#075746] md:min-h-[130px] md:p-4"
+          >
+            <img src="/assets/pic/pic-66.png" alt="" aria-hidden="true" className="size-11 object-contain" />
+            <b className="mt-2 text-[11px] md:text-sm">Ambulans</b>
+            <small className="text-[10px] md:text-xs">119</small>
+          </button>
         </div>
         <button
-          className="cancel-sos"
+          type="button"
           onClick={() => {
             setStage("home");
             setSeconds(272);
           }}
+          className="relative z-10 min-h-12 w-full max-w-[760px] cursor-pointer rounded-3xl bg-[#067564] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#055f52] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
         >
-          <Icon icon={faXmark} /> Batalkan SOS
+          <Icon icon={faXmark} aria-hidden="true" className="mr-2" /> Batalkan SOS
         </button>
+        {callDialog}
       </section>
     );
   }
   const choice = stage === "choice" || stage === "sent";
   return (
-    <section
-      className={`sos-page ${choice ? "sos-choice-page" : "sos-home-page"}`}
-    >
+    <section className={`${pageClass} text-center`}>
+      <img
+        src="/assets/pic/pic-62.png"
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-45"
+      />
+      <img
+        src="/assets/pic/pic-61.png"
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-[-25px] bottom-[42px] h-[170px] w-[calc(100%+50px)] object-cover opacity-80 md:hidden"
+      />
       {top()}
-      <img className="sos-mascot" src="/assets/pic/pic-31.png" alt="" />
+      <img
+        src="/assets/pic/pic-31.png"
+        alt=""
+        aria-hidden="true"
+        className={`relative z-10 mx-auto block h-[95px] w-[118px] object-contain md:h-[125px] md:w-[150px] ${choice ? "mt-0 md:mt-2" : "mt-3 md:mt-2"}`}
+      />
       {choice ? (
         <>
-          <h2>
+          <h2 className="relative z-10 mx-auto mt-1 max-w-[420px] text-[22px] font-semibold leading-[1.05] md:mt-2 md:text-[32px]">
             Kamu terlihat sedang
             <br />
             dalam situasi darurat?
           </h2>
-          <p>
+          <p className="relative z-10 mx-auto mt-2 max-w-[340px] text-[13px] leading-[1.5] md:text-sm">
             Pilih jenis bantuan yang kamu butuhkan
             <br />
             atau langsung hubungi kami.
           </p>
-          <div className="sos-options">
+          <div className="relative z-10 mx-auto mt-6 grid w-full max-w-[880px] gap-2.5 md:mt-8 md:grid-cols-2 md:gap-4">
             {[
               [
                 "Darurat Medis",
                 "Butuh bantuan medis segera (ambulans, rumah sakit, dll)",
                 "/assets/pic/pic-33.png",
                 "sent",
+                "bg-[#f6b4c7]",
               ],
               [
                 "Butuh Dukungan Emosional",
                 "Kamu merasa cemas, sedih, atau ingin bercerita",
                 "/assets/pic/pic-63.png",
                 "emotional",
+                "bg-[#f6efa6]",
               ],
               [
                 "Hubungi Kontak Darurat",
                 "Orang terdekat yang sudah ditambahkan",
                 "/assets/pic/pic-64.png",
                 "contacts",
+                "bg-[#b7e6ed]",
               ],
               [
                 "Lainnya",
                 "Kekerasan, kecelakaan, atau keadaan darurat lainnya",
                 "/assets/pic/pic-65.png",
                 "sent",
+                "bg-[#efc2ed]",
               ],
-            ].map(([name, text, img, next]) => (
-              <button key={name} onClick={() => setStage(next)}>
-                <img className="sos-option-icon" src={img} alt="" />
-                <span>
-                  <b>{name}</b>
-                  <small>{text}</small>
+            ].map(([name, text, img, next, tone]) => (
+              <button
+                key={name}
+                type="button"
+                onClick={() => setStage(next)}
+                className={`grid min-h-[64px] cursor-pointer grid-cols-[45px_1fr_18px] items-center gap-1.5 rounded-[12px] p-2 text-left text-[#452f37] transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#075746] md:min-h-[96px] md:grid-cols-[58px_1fr_18px] md:gap-3 md:rounded-[18px] md:p-5 ${tone}`}
+              >
+                <img src={img} alt="" aria-hidden="true" className="size-11 object-contain md:size-12" />
+                <span className="grid min-w-0">
+                  <b className="text-[13px] leading-tight md:text-base">{name}</b>
+                  <small className="text-[11px] leading-[1.25] md:text-xs">{text}</small>
                 </span>
-                <Icon icon={faChevronRight} />
+                <Icon icon={faChevronRight} aria-hidden="true" className="text-xs md:text-sm" />
               </button>
             ))}
           </div>
         </>
       ) : (
         <>
-          <h2>
+          <h2 className="relative z-10 mx-auto mt-2 max-w-[420px] text-[22px] font-semibold leading-[1.05] md:text-[32px]">
             Butuh bantuan
             <br />
             segera?
           </h2>
-          <p>
+          <p className="relative z-10 mx-auto mt-2 max-w-[330px] text-[13px] leading-[1.5] md:text-sm">
             Tekan tombol SOS jika kamu merasa
             <br />
             sedang dalam bahaya, tertekan, atau
             <br />
             membutuhkan pertolongan.
           </p>
-          <button className="sos-call" onClick={() => setStage("choice")} aria-label="SOS">
-            <img src="/assets/pic/pic-23.png" alt="" />
+          <button
+            type="button"
+            onClick={() => setStage("choice")}
+            aria-label="SOS"
+            className="relative z-10 mx-auto my-6 grid size-[142px] cursor-pointer place-items-center rounded-full border-8 border-double border-white bg-[#f47c87] shadow-[0_0_20px_#ef7780] transition-transform hover:scale-[1.03] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#075746] md:my-6 md:size-[180px]"
+          >
+            <img src="/assets/pic/pic-23.png" alt="" aria-hidden="true" className="h-[72%] w-[72%] object-contain" />
           </button>
-          <small>
+          <small className="relative z-10 block text-[11px] leading-[1.4] md:text-[13px]">
             Satu sentuhan,
             <br />
             bisa menyelamatkanmu.
           </small>
           <button
-            className="breathing-link"
-            onClick={() => setStage("breathing")}
+            type="button"
+            onClick={() => {
+              setBreathing(false);
+              setBreathTick(0);
+              setStage("breathing");
+            }}
+            className="relative z-10 mx-auto mt-[70px] flex min-h-11 w-fit cursor-pointer items-center gap-2 rounded-[17px] bg-[#d4e8cc] px-4 text-xs font-semibold text-[#28715b] transition-colors hover:bg-[#c5dfba] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#075746] md:mt-7"
           >
-            <Icon icon={faWind} /> Teknik pernapasan 4-7-8
+            <Icon icon={faWind} aria-hidden="true" /> Teknik pernapasan 4-7-8
           </button>
           <img
-            className="sos-corner sos-corner-leaf"
             src="/assets/pic/pic-19.png"
             alt=""
             aria-hidden="true"
+            className="pointer-events-none absolute bottom-[60px] left-[-10px] z-0 w-[92px] object-contain opacity-95 md:hidden"
           />
           <img
-            className="sos-corner sos-corner-flower"
             src="/assets/pic/pic-22.png"
             alt=""
             aria-hidden="true"
+            className="pointer-events-none absolute bottom-[60px] right-[-10px] z-0 w-[92px] object-contain opacity-95 md:hidden"
           />
         </>
       )}
       {stage === "sent" && (
-        <div className="sos-overlay">
-          <article>
-            <img src="/assets/pic/pic-34.png" alt="" />
-            <h2>SOS Berhasil dikirim!</h2>
-            <p>
-              Tim darurat sudah menerima informasi kamu dan segera menuju ke
-              lokasi.
+        <div className="fixed inset-0 z-30 grid place-items-center bg-[#173e35]/45 px-5">
+          <article className="w-full max-w-[460px] rounded-2xl bg-[#fffdf5] px-6 pb-7 pt-5 text-center md:px-10 md:pb-8">
+            <img src="/assets/pic/pic-34.png" alt="" aria-hidden="true" className="mx-auto h-16 w-[73px] object-contain md:h-20 md:w-[90px]" />
+            <h2 className="mb-1.5 mt-1 text-lg font-semibold md:text-xl">SOS Berhasil dikirim!</h2>
+            <p className="mx-auto mb-0 max-w-[240px] text-xs leading-[1.45] md:text-sm">
+              Tim darurat sudah menerima informasi kamu dan segera menuju ke lokasi.
             </p>
-            <button onClick={() => setStage("active")}>Oke</button>
+            <button
+              type="button"
+              onClick={() => setStage("active")}
+              className="mt-5 min-h-11 w-full cursor-pointer rounded-full bg-[#2f7d66] px-5 text-sm font-bold text-white transition-colors hover:bg-[#286b57] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#075746] md:min-h-12"
+            >
+              Oke
+            </button>
           </article>
         </div>
       )}
@@ -2172,16 +2773,17 @@ function SOS({ go }) {
   );
 }
 function Playlist({ go }) {
-  const [playing, setPlaying] = useState(0);
-  const [progress, setProgress] = useState(34);
+  const [current, setCurrent] = useState(1);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [progress, setProgress] = useState(0);
   useEffect(() => {
-    if (playing === null) return;
+    if (!isPlaying) return;
     const timer = setInterval(
       () => setProgress((value) => (value + 0.3) % 100),
       1000,
     );
     return () => clearInterval(timer);
-  }, [playing]);
+  }, [isPlaying]);
   const covers = [
     "/assets/pic/pic-47.png",
     "/assets/pic/pic-48.png",
@@ -2189,93 +2791,209 @@ function Playlist({ go }) {
     "/assets/pic/pic-50.png",
     "/assets/pic/pic-51.png",
   ];
+  const toSeconds = (value) =>
+    value.split(":").reduce((total, part) => total * 60 + Number(part), 0);
+  const totalSeconds = songs.reduce(
+    (total, song) => total + toSeconds(song[2]),
+    0,
+  );
+  const activeSong = songs[current] || songs[0];
+  const duration = toSeconds(activeSong[2]);
+  const played = Math.floor((progress / 100) * duration);
+  const formatTime = (value) =>
+    `${Math.floor(value / 60)}:${String(value % 60).padStart(2, "0")}`;
   return (
-    <section className="playlist-page">
-      <header>
-        <button onClick={() => go("home")} aria-label="Kembali">
-          <Icon icon={faArrowLeft} />
-        </button>
-        <h1>Detail Playlist</h1>
-      </header>
-      <img
-        className="playlist-cover"
-        src="/assets/pic/pic-46.png"
-        alt="Pemandangan pepohonan dari jendela"
-      />
-      <div className="playlist-copy">
-        <h2>Good Vibes Only</h2>
-        <p>
-          Lagu-lagu ceria untuk mengembalikan
-          <br />
-          semangatmu!
-        </p>
-        <span>
-          <Icon icon={faMusic} /> 1h 35m &nbsp; • &nbsp; 100 Lagu
-        </span>
-      </div>
-      <div className="song-list">
-        {songs.slice(1).map((s, i) => (
+    <section className="min-h-[calc(100svh-74px)] bg-[#f4f8eb] px-5 pb-[240px] pt-3 font-['Poppins'] text-[#08715d] md:min-h-screen md:px-10 md:pb-[190px] md:pt-8">
+      <div className="mx-auto w-full max-w-[960px]">
+        <header className="grid grid-cols-[44px_1fr_44px] items-center">
           <button
-            key={s[0]}
-            aria-label={`Putar ${s[0]} oleh ${s[1]}`}
-            onClick={() => {
-              setPlaying(i + 1);
-              setProgress(0);
-            }}
-            className={playing === i + 1 ? "playing" : ""}
+            type="button"
+            onClick={() => go("home")}
+            aria-label="Kembali"
+            className="grid size-11 cursor-pointer place-items-center rounded-full text-xl text-[#689d84] transition-colors hover:bg-white/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460] md:text-2xl"
           >
-            <img src={covers[i]} alt="" />
-            <div>
-              <b>{s[0]}</b>
-              <small>{s[1]}</small>
-            </div>
-            <time>{s[2]}</time>
-            <span>⋮</span>
+            <Icon icon={faArrowLeft} aria-hidden="true" />
           </button>
-        ))}
-      </div>
-      <div className="mini-player">
+          <h1 className="m-0 text-center text-base font-semibold md:text-2xl">
+            Detail Playlist
+          </h1>
+          <span aria-hidden="true" />
+        </header>
         <img
-          src={playing > 0 ? covers[playing - 1] : "/assets/pic/pic-49.png"}
-          alt=""
+          src="/assets/pic/pic-46.png"
+          alt="Pemandangan pepohonan dari jendela"
+          width="800"
+          height="400"
+          className="mt-3 h-[180px] w-full rounded-2xl object-cover md:mt-5 md:h-[300px] md:rounded-[28px]"
         />
-        <div>
-          <b>{songs[playing]?.[0] || songs[0][0]}</b>
-          <small>{songs[playing]?.[1] || songs[0][1]}</small>
-          <label>
-            <i style={{ width: `${progress}%` }} />
-            <span>1:47</span>
-            <span>4:11</span>
-          </label>
+        <div className="px-1 pb-2 pt-4 md:pt-5">
+          <h2 className="m-0 text-2xl font-semibold md:text-3xl">Good Vibes Only</h2>
+          <p className="mb-1 mt-1 max-w-[420px] text-sm leading-6 md:text-base">
+            Lagu-lagu ceria untuk mengembalikan semangatmu!
+          </p>
+          <span className="flex items-center gap-1.5 text-xs font-medium text-[#4a6b5d] md:text-sm">
+            <Icon icon={faMusic} aria-hidden="true" /> {songs.length} lagu ·{" "}
+            {Math.round(totalSeconds / 60)} menit
+          </span>
         </div>
-        <button onClick={() => setProgress(0)} aria-label="Sebelumnya">
-          <Icon icon={faPlay} />
-        </button>
-        <button
-          onClick={() => setPlaying(playing === null ? 0 : null)}
-          aria-label={playing === null ? "Putar" : "Jeda"}
-        >
-          <Icon icon={playing === null ? faPlay : faPause} />
-        </button>
-        <button
-          onClick={() => {
-            setPlaying(
-              (playing ?? 0) >= songs.length - 1 ? 0 : (playing ?? 0) + 1,
+        <div className="rounded-2xl bg-[#fff9dd] p-2 md:grid md:grid-cols-2 md:gap-x-4 md:p-4">
+          {songs.slice(1).map((song, index) => {
+            const songIndex = index + 1;
+            const active = current === songIndex;
+            return (
+              <button
+                key={song[0]}
+                type="button"
+                aria-label={`Putar ${song[0]} oleh ${song[1]}`}
+                aria-pressed={active}
+                onClick={() => {
+                  setCurrent(songIndex);
+                  setIsPlaying(true);
+                  setProgress(0);
+                }}
+                className={`grid min-h-[60px] w-full cursor-pointer grid-cols-[48px_1fr_auto] items-center gap-3 rounded-xl px-2 py-1.5 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460] md:min-h-[76px] md:px-3 ${active ? "bg-[#e3efd8]" : "hover:bg-[#f2f4dd]"}`}
+              >
+                <img
+                  src={covers[index]}
+                  alt=""
+                  aria-hidden="true"
+                  width="48"
+                  height="48"
+                  className="size-12 rounded-lg object-cover"
+                />
+                <span className="grid min-w-0">
+                  <b className="truncate text-sm font-semibold md:text-base">
+                    {song[0]}
+                  </b>
+                  <small className="truncate text-xs text-[#4a6b5d] md:text-sm">
+                    {song[1]}
+                  </small>
+                </span>
+                <time className="text-xs text-[#4a6b5d] md:text-sm">
+                  {song[2]}
+                </time>
+              </button>
             );
+          })}
+        </div>
+      </div>
+      <div className="fixed bottom-[86px] left-1/2 z-20 grid min-h-[80px] w-[calc(100%-2rem)] max-w-[620px] -translate-x-1/2 grid-cols-[48px_1fr_44px_44px_44px] items-center gap-2 rounded-2xl bg-[#2f7d66] p-2.5 text-white shadow-[0_10px_30px_#0b3d2f33] lg:bottom-6 lg:left-[calc(50%+135px)] lg:min-h-[86px] lg:gap-3 lg:p-3">
+        <img
+          src={covers[current - 1] || "/assets/pic/pic-49.png"}
+          alt=""
+          aria-hidden="true"
+          width="48"
+          height="48"
+          className="size-12 rounded-lg object-cover"
+        />
+        <div className="min-w-0">
+          <b className="block truncate text-xs font-semibold md:text-base">
+            {activeSong[0]}
+          </b>
+          <small className="block truncate text-[11px] text-white md:text-sm">
+            {activeSong[1]}
+          </small>
+          <div className="mt-2">
+            <label className="relative block h-1 rounded-full bg-white/35" aria-label="Progres lagu">
+              <i
+                className="absolute inset-y-0 left-0 rounded-full bg-white"
+                style={{ width: `${progress}%` }}
+              />
+            </label>
+            <span className="mt-1 flex justify-between text-[10px] text-white md:text-[11px]">
+              <span>{formatTime(played)}</span>
+              <span>{activeSong[2]}</span>
+            </span>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            setCurrent((value) => (value <= 1 ? songs.length - 1 : value - 1));
             setProgress(0);
+            setIsPlaying(true);
+          }}
+          aria-label="Sebelumnya"
+          className="grid size-11 cursor-pointer place-items-center rounded-full transition-colors hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white md:text-lg"
+        >
+          <Icon icon={faPlay} aria-hidden="true" className="-scale-x-100" />
+        </button>
+        <button
+          type="button"
+          onClick={() => setIsPlaying((value) => !value)}
+          aria-label={isPlaying ? "Jeda" : "Putar"}
+          className="grid size-11 cursor-pointer place-items-center rounded-full bg-white text-[#2f7d66] transition-colors hover:bg-[#f0f7ec] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white md:text-lg"
+        >
+          <Icon icon={isPlaying ? faPause : faPlay} aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setCurrent((value) => (value >= songs.length - 1 ? 0 : value + 1));
+            setProgress(0);
+            setIsPlaying(true);
           }}
           aria-label="Berikutnya"
+          className="grid size-11 cursor-pointer place-items-center rounded-full transition-colors hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white md:text-lg"
         >
-          <Icon icon={faPlay} />
+          <Icon icon={faPlay} aria-hidden="true" />
         </button>
       </div>
     </section>
   );
 }
-function Education({ go }) {
+function Education({ go, tasks = [] }) {
   const [topic, setTopic] = useState(null);
   const [card, setCard] = useState(0);
   const [flipped, setFlipped] = useState(false);
+  const [savedCards, setSavedCards] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("remind-saved-cards") || "[]");
+    } catch {
+      return [];
+    }
+  });
+  const toggleSaved = (key) => {
+    setSavedCards((current) => {
+      const next = current.includes(key)
+        ? current.filter((item) => item !== key)
+        : [...current, key];
+      localStorage.setItem("remind-saved-cards", JSON.stringify(next));
+      return next;
+    });
+  };
+  const totalCards = education.reduce(
+    (total, item) => total + item.cards.length,
+    0,
+  );
+  const pageClass =
+    "min-h-[calc(100svh-74px)] bg-[#d4ecdc] px-[18px] pb-24 pt-2.5 font-['Poppins'] text-[#123f34] md:min-h-screen md:px-10 md:py-8";
+  const backButton = (onClick) => (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label="Kembali"
+      className="grid size-11 cursor-pointer place-items-center rounded-full text-xl text-[#173e33] transition-colors hover:bg-white/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460] md:text-2xl"
+    >
+      <Icon icon={faArrowLeft} aria-hidden="true" />
+    </button>
+  );
+  const musicButton = (
+    <button
+      type="button"
+      onClick={() => go("playlist")}
+      aria-label="Buka Listening"
+      className="grid size-11 cursor-pointer place-items-center rounded-full bg-white text-sm text-[#173e33] transition-colors hover:bg-[#eef6e7] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460] md:text-base"
+    >
+      <Icon icon={faMusic} aria-hidden="true" />
+    </button>
+  );
+  const headerActions = (
+    <div className="flex shrink-0 items-center gap-2">
+      {musicButton}
+      <NotificationBell tasks={tasks} go={go} />
+    </div>
+  );
   if (topic !== null) {
     const item = education[topic],
       data = item.cards[card];
@@ -2287,148 +3005,221 @@ function Education({ go }) {
           : topic === 2
             ? "/assets/pic/pic-69.png"
             : "/assets/pic/pic-70.png";
+    const cardKey = `${topic}-${card}`;
+    const saved = savedCards.includes(cardKey);
     return (
-      <section className="education-page flashcard-page">
-        <header>
-          <button
-            onClick={() => {
+      <section className={pageClass}>
+        <div className="mx-auto w-full max-w-[760px]">
+          <header className="flex items-center gap-2">
+            {backButton(() => {
               setTopic(null);
               setFlipped(false);
-            }}
-            aria-label="Kembali"
-          >
-            <Icon icon={faArrowLeft} />
-          </button>
-          <div>
-            <small>F L A S H C A R D</small>
-            <h1>{item.topic}</h1>
-          </div>
-          <button aria-label="Notifikasi">
-            <Icon icon={faMusic} />
-          </button>
-        </header>
-        <div className={`flashcard ${flipped ? "flipped" : ""}`}>
-          <button
-            className="flashcard-face"
-            onClick={() => setFlipped(!flipped)}
-          >
-            {flipped ? (
-              <>
-                <span>JAWABAN RINGKAS</span>
-                <p>{data[1]}</p>
-                <blockquote>{item.citation}</blockquote>
-                <small>
-                  <Icon icon={faSeedling} /> Ketuk untuk kembali
-                </small>
-              </>
-            ) : (
-              <>
-                <span>
-                  {item.topic === "Kesehatan Mental" ? "Mental" : item.topic}
-                </span>
-                <i>
-                  <Icon icon={faCircleCheck} />
-                </i>
-                <img src={cardArt} alt="" />
-                <h2>{data[0]}</h2>
-                <small>
-                  <Icon icon={faSeedling} /> Ketuk untuk lihat jawaban
-                </small>
-              </>
-            )}
-          </button>
-          <button
-            className="next-card"
-            onClick={() => {
-              setCard((card + 1) % item.cards.length);
-              setFlipped(false);
-            }}
-          >
-            Kartu berikutnya →
-          </button>
-          <aside>
-            <Icon icon={faHeartPulse} />
-            <p>
-              <b>Kamu tidak harus menghadapinya sendiri.</b>
-              <br />
-              Jika tekanan mulai mengganggu keseharian, hubungi orang terpercaya
-              atau tenaga profesional.
+            })}
+            <div className="min-w-0 flex-1 text-center">
+              <small className="block text-[10px] font-semibold tracking-[0.18em] text-[#2f6a51]">
+                FLASHCARD
+              </small>
+              <h1 className="m-0 truncate font-['Playfair_Display'] text-xl font-bold md:text-2xl">
+                {item.topic}
+              </h1>
+            </div>
+            {headerActions}
+          </header>
+          <div className="mt-5 md:mt-8">
+            <div className={`relative overflow-hidden rounded-2xl shadow-[0_12px_25px_#234f3e20] md:rounded-3xl ${flipped ? "bg-[#075306] text-white" : "bg-[#f9f8f7] text-[#095427]"}`}>
+              <button
+                type="button"
+                aria-pressed={flipped}
+                onClick={() => setFlipped((value) => !value)}
+                className="relative flex min-h-[320px] w-full cursor-pointer flex-col p-6 text-left focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-[#087460] md:min-h-[460px] md:p-9"
+              >
+                {flipped ? (
+                  <>
+                    <span className="text-xs font-semibold tracking-[0.18em]">
+                      JAWABAN RINGKAS
+                    </span>
+                    <p className="mb-5 mt-6 text-base font-semibold italic leading-7 md:text-lg md:leading-8">
+                      {data[1]}
+                    </p>
+                    <blockquote className="mx-1 mb-5 mt-0 rounded-2xl bg-[#548865] px-4 py-3 text-xs leading-5 md:text-sm md:leading-6">
+                      {item.citation}
+                    </blockquote>
+                    <small className="mt-auto flex items-center gap-2 text-xs text-white/85">
+                      <Icon icon={faSeedling} aria-hidden="true" /> Ketuk untuk kembali
+                    </small>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-xs font-semibold tracking-[0.18em]">
+                      {item.topic === "Kesehatan Mental" ? "MENTAL" : item.topic.toUpperCase()}
+                    </span>
+                    <img
+                      src={cardArt}
+                      alt=""
+                      aria-hidden="true"
+                      width="96"
+                      height="100"
+                      className="mx-auto mb-2 mt-6 h-[100px] w-[96px] object-contain md:mt-10 md:h-[130px] md:w-[120px]"
+                    />
+                    <h2 className="mx-auto mb-10 mt-1 max-w-[440px] text-center font-['Playfair_Display'] text-xl font-bold italic leading-[1.35] md:text-3xl">
+                      {data[0]}
+                    </h2>
+                    <small className="mt-auto flex items-center gap-2 text-xs text-[#4f6b60]">
+                      <Icon
+                        icon={faSeedling}
+                        aria-hidden="true"
+                        className="size-6 rounded-full bg-[#d9ecd9] p-1.5"
+                      />
+                      Ketuk untuk lihat jawaban
+                    </small>
+                    <span
+                      aria-hidden="true"
+                      className="absolute bottom-0 right-0 size-16 bg-[#b5dfba] [clip-path:polygon(100%_0,100%_100%,0_100%)]"
+                    />
+                  </>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => toggleSaved(cardKey)}
+                aria-label={saved ? "Hapus dari simpanan" : "Simpan kartu"}
+                aria-pressed={saved}
+                className={`absolute right-5 top-5 grid size-9 cursor-pointer place-items-center rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460] ${flipped ? "bg-white/15 text-white hover:bg-white/25" : saved ? "bg-[#075306] text-white" : "bg-[#e2f0e7] text-[#62a98a] hover:bg-[#d3e8dc]"}`}
+              >
+                <Icon icon={faBookmark} aria-hidden="true" />
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setCard((value) => (value + 1) % item.cards.length);
+                setFlipped(false);
+              }}
+              className="mt-3 min-h-12 w-full cursor-pointer rounded-xl bg-[#075306] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#064304] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#075746] md:text-base"
+            >
+              Kartu berikutnya
+              <span className="ml-3 text-xs font-normal text-white/70">
+                {card + 1}/{item.cards.length}
+              </span>
+            </button>
+            <aside className="mt-4 grid grid-cols-[36px_1fr] items-center gap-3 rounded-xl bg-[#eef0ce] px-3 py-3">
+              <Icon icon={faHeartPulse} aria-hidden="true" className="text-2xl text-[#3d6b4c]" />
+              <p className="m-0 text-xs leading-5 md:text-sm">
+                <b>Kamu tidak harus menghadapinya sendiri.</b>
+                <br />
+                Jika tekanan mulai mengganggu keseharian, hubungi orang terpercaya
+                atau tenaga profesional.
+              </p>
+            </aside>
+            <p className="mb-0 mt-3 text-center text-[11px] leading-5 text-[#4f6b60] md:text-xs">
+              Konten ini bersifat edukatif, bukan alat diagnosis atau pengganti
+              bantuan profesional.
             </p>
-          </aside>
-          <p className="disclaimer">
-            Konten ini bersifat edukatif, bukan alat diagnosis atau pengganti
-            bantuan profesional
-          </p>
+          </div>
         </div>
       </section>
     );
   }
+  const topicTones = [
+    "bg-[#f1deac]",
+    "bg-[#a8d5ed]",
+    "bg-[#f4dda8]",
+    "bg-[#a8dba7]",
+  ];
   return (
-    <section className="education-page education-home">
-      <header>
-        <button onClick={() => go("home")} aria-label="Kembali">
-          <Icon icon={faArrowLeft} />
-        </button>
-        <p>
-          Ruang Belajar<strong>Edukasi</strong>
-        </p>
-        <button aria-label="Notifikasi">
-          <Icon icon={faMusic} />
-        </button>
-      </header>
-      <section className="education-hero">
-        <div>
-          <small>MENTAL HEALTH</small>
-          <h1>
-            Kenali dirimu,
-            <br />
-            <em>Jaga dirimu.</em>
-          </h1>
-          <p>
-            Pelajari kesehatan mental melalui
-            <br />
-            materi dan kartu singkat berbasis
-            <br />
-            jurnal.
+    <section className={pageClass}>
+      <div className="mx-auto w-full max-w-[1000px]">
+        <header className="flex items-center gap-2">
+          {backButton(() => go("home"))}
+          <p className="m-0 flex-1 text-center text-[10px] leading-tight md:text-xs">
+            Ruang Belajar
+            <strong className="block text-lg font-bold md:text-2xl">Edukasi</strong>
           </p>
-        </div>
-        <img src="/assets/pic/pic-67.png" alt="" />
-      </section>
-      <div className="education-stats">
-        <span>
-          <b>4</b>Topik Utama
-        </span>
-        <span>
-          <b>16</b>Kartu Edukasi
-        </span>
-        <span>
-          <b>5 min</b>Belajar Ringan
-        </span>
-      </div>
-      <div className="education-heading">
-        <small>KARTU EDUKASI</small>
-        <h2>Satu Menit untuk dirimu</h2>
-      </div>
-      <section className="topic-list">
-        {education.map((t, i) => (
-          <button
-            key={t.topic}
-            onClick={() => {
-              setTopic(i);
-              setCard(0);
-              setFlipped(false);
-            }}
-          >
-            <Icon icon={t.icon} />
-            <span>
-              <small>TOPIK 0{i + 1}</small>
-              <b>{t.topic}</b>
-              <em>4 Kartu Edukasi</em>
+          {headerActions}
+        </header>
+        <section className="mt-3 grid grid-cols-[1fr_92px] items-center gap-3 rounded-[18px] bg-[#07572e] px-4 py-5 text-white md:mt-6 md:grid-cols-[1fr_auto] md:gap-10 md:rounded-3xl md:px-8 md:py-8">
+          <div>
+            <small className="text-[10px] font-semibold tracking-wide text-white/75 md:text-xs">
+              MENTAL HEALTH
+            </small>
+            <h1 className="mb-2 mt-1 text-[21px] font-semibold leading-[1.1] md:text-[36px]">
+              Kenali dirimu,
+              <br />
+              <em className="font-['Playfair_Display'] italic">Jaga dirimu.</em>
+            </h1>
+            <p className="m-0 max-w-[420px] text-xs leading-5 text-white/85 md:text-base md:leading-7">
+              Pelajari kesehatan mental melalui materi dan kartu singkat
+              berbasis jurnal.
+            </p>
+          </div>
+          <img
+            src="/assets/pic/pic-67.png"
+            alt=""
+            aria-hidden="true"
+            width="120"
+            height="140"
+            className="h-[112px] w-[88px] object-contain md:h-[190px] md:w-[160px]"
+          />
+        </section>
+        <div className="mx-2 mt-4 grid grid-cols-3 rounded-[13px] bg-[#f9fbf0] px-1 py-2 md:mx-0 md:mt-6 md:py-4">
+          {[
+            [education.length, "Topik Utama"],
+            [totalCards, "Kartu Edukasi"],
+            [education[0]?.cards.length || 0, "Kartu / Topik"],
+          ].map(([value, label], index) => (
+            <span
+              key={label}
+              className={`grid px-1 text-center text-[10px] leading-4 md:text-xs ${index < 2 ? "border-r border-[#1a5c49]" : ""}`}
+            >
+              <b className="text-sm font-bold md:text-xl">{value}</b>
+              {label}
             </span>
-            <b className="topic-arrow">→</b>
-          </button>
-        ))}
-      </section>
+          ))}
+        </div>
+        <div className="mb-2.5 mt-5 md:mt-7">
+          <small className="text-[10px] font-semibold tracking-[0.14em] text-[#2f6a51] md:text-xs">
+            KARTU EDUKASI
+          </small>
+          <h2 className="mb-0 mt-1 text-lg font-semibold md:text-2xl">
+            Satu Menit untuk dirimu
+          </h2>
+        </div>
+        <div className="grid gap-2.5 md:grid-cols-2 md:gap-4">
+          {education.map((item, index) => (
+            <button
+              key={item.topic}
+              type="button"
+              onClick={() => {
+                setTopic(index);
+                setCard(0);
+                setFlipped(false);
+              }}
+              className={`flex min-h-[72px] w-full cursor-pointer items-center gap-3 rounded-[14px] px-3 py-2.5 text-left text-[#174d3f] transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460] md:min-h-[92px] md:gap-4 md:rounded-2xl md:px-5 md:py-4 ${topicTones[index % topicTones.length]}`}
+            >
+              <Icon
+                icon={item.icon}
+                aria-hidden="true"
+                className="size-10 shrink-0 text-white md:size-12 lg:size-14"
+              />
+              <span className="grid min-w-0 flex-1">
+                <small className="text-[10px] font-semibold tracking-wide md:text-xs">
+                  TOPIK 0{index + 1}
+                </small>
+                <b className="truncate text-sm font-semibold md:text-lg">{item.topic}</b>
+                <em className="text-[11px] not-italic text-[#315a4b] md:text-xs">
+                  {item.cards.length} Kartu Edukasi
+                </em>
+              </span>
+              <b
+                aria-hidden="true"
+                className="grid size-9 shrink-0 place-items-center rounded-full bg-[#f7fbef] text-base font-bold md:size-10"
+              >
+                →
+              </b>
+            </button>
+          ))}
+        </div>
+      </div>
     </section>
   );
 }
@@ -2440,229 +3231,326 @@ function Contacts({ go, persist, contacts, setContacts }) {
   });
   const [saved, setSaved] = useState(false);
   return (
-    <section className="contacts-page">
-      <header>
-        <button onClick={() => go("profile")} aria-label="Kembali">
-          <Icon icon={faArrowLeft} />
-        </button>
-        <div>
-          <h1>Tambah Kontak Baru</h1>
-          <p>Simpan Kontak Darurat di Satu Tempat</p>
-        </div>
-      </header>
-      <div className="contact-list">
-        {contacts.map((contact, index) => (
-          <article key={contact.name}>
-            <div>
-              <Icon icon={faUser} />
-              <span>
-                <b>Detail Kontak {index + 1}</b>
-                <small>Pastikan nomor mudah dihubungi</small>
+    <section className="min-h-[calc(100svh-74px)] bg-[#d8ecdd] px-[18px] pb-28 pt-3.5 font-['Poppins'] text-[#173d35] md:min-h-screen md:px-10 md:py-8">
+      <div className="mx-auto w-full max-w-[820px]">
+        <header className="mb-4 flex items-start gap-2">
+          <button
+            type="button"
+            onClick={() => go("profile")}
+            aria-label="Kembali"
+            className="grid size-11 shrink-0 cursor-pointer place-items-center rounded-full text-xl text-[#578c76] transition-colors hover:bg-white/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460]"
+          >
+            <Icon icon={faArrowLeft} aria-hidden="true" />
+          </button>
+          <div>
+            <h1 className="m-0 text-2xl font-bold leading-tight md:text-3xl">
+              Tambah Kontak Baru
+            </h1>
+            <p className="mb-0 mt-1 text-xs text-[#4f6b60] md:text-sm">
+              Simpan kontak darurat di satu tempat
+            </p>
+          </div>
+        </header>
+        <div className="grid gap-3 md:gap-4">
+          {contacts.map((contact, index) => (
+            <article
+              key={contact.id || contact.phone}
+              className="rounded-xl bg-[#eff6ec] p-3 md:rounded-2xl md:p-5"
+            >
+              <div className="flex items-center gap-2 rounded-lg bg-[#16735f] px-3 py-2 text-white">
+                <Icon icon={faUser} aria-hidden="true" className="text-lg" />
+                <span className="grid">
+                  <b className="text-sm md:text-base">Detail Kontak {index + 1}</b>
+                  <small className="text-[11px] text-white/80 md:text-xs">
+                    Pastikan nomor mudah dihubungi
+                  </small>
+                </span>
+              </div>
+              <dl className="mb-0 mt-3 grid gap-2">
+                {[
+                  ["NAMA LENGKAP*", contact.name],
+                  ["KATEGORI/HUBUNGAN*", contact.relation],
+                  ["NOMOR TELEPON*", contact.phone],
+                ].map(([term, value]) => (
+                  <div key={term}>
+                    <dt className="mb-1 text-[10px] font-bold uppercase tracking-wide text-[#174d3f] md:text-xs">
+                      {term}
+                    </dt>
+                    <dd className="m-0 min-h-[38px] rounded-md bg-[#a9cdb2] px-3 py-2 text-sm">
+                      {value}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </article>
+          ))}
+          <article className="rounded-xl bg-[#eff6ec] p-3 md:rounded-2xl md:p-5">
+            <div className="flex items-center gap-2 rounded-lg bg-[#16735f] px-3 py-2 text-white">
+              <Icon icon={faUser} aria-hidden="true" className="text-lg" />
+              <span className="grid">
+                <b className="text-sm md:text-base">
+                  Detail Kontak {contacts.length + 1}
+                </b>
+                <small className="text-[11px] text-white/80 md:text-xs">
+                  Pastikan nomor mudah dihubungi
+                </small>
               </span>
             </div>
-            <dl>
-              <dt>NAMA LENGKAP*</dt>
-              <dd>{contact.name}</dd>
-              <dt>KATEGORI/HUBUNGAN*</dt>
-              <dd>{contact.relation}</dd>
-              <dt>NOMOR TELEPON*</dt>
-              <dd>{contact.phone}</dd>
-            </dl>
-          </article>
-        ))}
-        <article>
-          <div>
-            <Icon icon={faUser} />
-            <span>
-              <b>Detail Kontak {contacts.length + 1}</b>
-              <small>Pastikan nomor mudah dihubungi</small>
-            </span>
-          </div>
-          <form
-            onSubmit={async (e) => {
-              e.preventDefault();
-              try {
-                await persist?.(form);
-              } catch {
-                return;
-              }
-              setContacts([...contacts, form]);
-              setForm({ name: "", phone: "", relation: "Keluarga" });
-              setSaved(true);
-            }}
-          >
-            <Field
-              label="NAMA LENGKAP*"
-              placeholder="Masukkan nama"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-            />
-            <Field
-              label="NOMOR TELEPON*"
-              placeholder="Masukkan nomor"
-              value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              icon={faPhone}
-            />
-            <div className="field">
-              <span>KATEGORI/HUBUNGAN*</span>
-              <div className="relation-pills" role="radiogroup" aria-label="Kategori">
-                {["Keluarga", "Teman", "Kerja", "Lainnya"].map((r) => (
-                  <button
-                    key={r}
-                    type="button"
-                    role="radio"
-                    aria-checked={form.relation === r}
-                    className={`relation-pill ${form.relation === r ? "active" : ""}`}
-                    onClick={() => setForm({ ...form, relation: r })}
-                  >
-                    {r}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="form-actions">
-              <button className="primary" type="submit">
-                <Icon icon={faFloppyDisk} /> Simpan Kontak
-              </button>
-              <button
-                className="secondary"
-                type="button"
-                onClick={() =>
-                  setForm({ name: "", phone: "", relation: "Keluarga" })
+            <form
+              className="mt-4 grid gap-3"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                try {
+                  await persist?.(form);
+                } catch {
+                  return;
                 }
-              >
-                <Icon icon={faXmark} /> Batal
-              </button>
-            </div>
-          </form>
-        </article>
+                setContacts([...contacts, form]);
+                setForm({ name: "", phone: "", relation: "Keluarga" });
+                setSaved(true);
+              }}
+            >
+              <Field
+                label="NAMA LENGKAP*"
+                placeholder="Masukkan nama"
+                autoComplete="name"
+                icon={faUser}
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                inputClassName="bg-[#a9cdb2]"
+              />
+              <Field
+                label="NOMOR TELEPON*"
+                placeholder="Masukkan nomor"
+                autoComplete="tel"
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                icon={faPhone}
+                inputClassName="bg-[#a9cdb2]"
+              />
+              <div>
+                <span className="mb-1.5 ml-1 block text-[10px] font-bold uppercase tracking-wide text-[#365e53] md:text-xs">
+                  KATEGORI/HUBUNGAN*
+                </span>
+                <div
+                  className="flex flex-wrap gap-2"
+                  role="radiogroup"
+                  aria-label="Kategori"
+                >
+                  {["Keluarga", "Teman", "Kerja", "Lainnya"].map((relation) => (
+                    <button
+                      key={relation}
+                      type="button"
+                      role="radio"
+                      aria-checked={form.relation === relation}
+                      onClick={() => setForm({ ...form, relation })}
+                      className={`min-h-11 cursor-pointer rounded-full border-2 px-4 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460] ${form.relation === relation ? "border-[#07513f] bg-[#0f6b58] text-white" : "border-transparent bg-[#cfe2d4] text-[#244a3f] hover:bg-[#c2d9c8]"}`}
+                    >
+                      {relation}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="mt-1 grid grid-cols-2 gap-2.5">
+                <button
+                  type="submit"
+                  className="flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-full bg-[#0f6b58] px-4 text-sm font-bold text-white transition-colors hover:bg-[#0b5748] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#075746]"
+                >
+                  <Icon icon={faFloppyDisk} aria-hidden="true" /> Simpan Kontak
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setForm({ name: "", phone: "", relation: "Keluarga" })
+                  }
+                  className="flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-full bg-[#e2eee6] px-4 text-sm font-bold text-[#07513f] transition-colors hover:bg-[#d1e3d7] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460]"
+                >
+                  <Icon icon={faXmark} aria-hidden="true" /> Batal
+                </button>
+              </div>
+            </form>
+          </article>
+        </div>
       </div>
       {saved && (
-        <div className="success-overlay">
-          <div role="dialog" aria-modal="true" aria-label="Kontak disimpan">
-            <Icon icon={faCircleCheck} />
-            <b>Berhasil</b>
-            <p>Kontak berhasil disimpan</p>
-            <button onClick={() => setSaved(false)}>Ok</button>
-          </div>
-        </div>
+        <SuccessDialog
+          title="Berhasil"
+          message="Kontak berhasil disimpan."
+          close={() => setSaved(false)}
+        />
       )}
     </section>
   );
 }
-function Profile({ user, setUser, logout, go, persist }) {
+function Profile({ user, setUser, logout, go, persist, flash }) {
   const [editing, setEditing] = useState(false);
   const [saved, setSaved] = useState(false);
+  const handleAvatar = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (file.size > 1024 * 1024) {
+      flash?.("Ukuran foto maksimal 1 MB.");
+      event.target.value = "";
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setUser((current) => ({ ...current, avatar: String(reader.result) }));
+    reader.readAsDataURL(file);
+  };
   if (editing)
     return (
-      <section className="profile-edit">
-        <header>
-          <button onClick={() => setEditing(false)} aria-label="Kembali">
-            <Icon icon={faArrowLeft} />
-          </button>
-          <div>
-            <h1>Kelola Profil</h1>
-            <p>Perbarui Informasi Akunmu</p>
-          </div>
-        </header>
-        <div className="profile-summary">
-          <div className="avatar">
-            <Icon icon={faUser} />
-          </div>
-          <div>
-            <b>{user.name}</b>
-            <span>
-              {user.age}, {user.gender}
-            </span>
-            <span>{user.email}</span>
-            <button type="button">Ganti Foto</button>
-          </div>
-        </div>
-        <form
-          onSubmit={async (e) => {
-            e.preventDefault();
-            try {
-              await persist?.(user);
-            } catch {
-              return;
-            }
-            setSaved(true);
-          }}
-        >
-          <Field
-            label="NAMA LENGKAP*"
-            value={user.name}
-            onChange={(e) => setUser({ ...user, name: e.target.value })}
-          />
-          <Field
-            label="UMUR*"
-            value={user.age}
-            onChange={(e) => setUser({ ...user, age: e.target.value })}
-          />
-          <label className="field">
-            <span>JENIS KELAMIN*</span>
-            <select
-              value={user.gender}
-              onChange={(e) => setUser({ ...user, gender: e.target.value })}
+      <section className="min-h-[calc(100svh-74px)] bg-[#d8ecdd] px-[18px] pb-28 pt-4 font-['Poppins'] text-[#173d35] md:min-h-screen md:px-10 md:py-8">
+        <div className="mx-auto w-full max-w-[820px]">
+          <header className="mb-4 flex items-start gap-2">
+            <button
+              type="button"
+              onClick={() => setEditing(false)}
+              aria-label="Kembali"
+              className="grid size-11 shrink-0 cursor-pointer place-items-center rounded-full text-xl text-[#578c76] transition-colors hover:bg-white/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460]"
             >
-              <option>Perempuan</option>
-              <option>Laki-laki</option>
-            </select>
-          </label>
-          <Field
-            label="EMAIL*"
-            type="email"
-            value={user.email}
-            onChange={(e) => setUser({ ...user, email: e.target.value })}
-          />
-          <Field
-            label="NOMOR TELEPON*"
-            value={user.phone}
-            onChange={(e) => setUser({ ...user, phone: e.target.value })}
-          />
-          <label className="field">
-            <span>TENTANG SAYA</span>
-            <textarea
-              value={user.about}
-              onChange={(e) => setUser({ ...user, about: e.target.value })}
-            />
-          </label>
-          <button className="primary" type="submit">
-            <Icon icon={faCircleCheck} /> SIMPAN PERUBAHAN
-          </button>
-          <button className="profile-logout" type="button" onClick={logout}>
-            <Icon icon={faRightFromBracket} /> KELUAR AKUN
-          </button>
-        </form>
-        {saved && (
-          <div className="success-overlay">
-            <div role="dialog" aria-modal="true" aria-label="Data diperbarui">
-              <Icon icon={faCircleCheck} />
-              <b>Berhasil</b>
-              <p>Data berhasil diperbarui</p>
-              <button
-                onClick={() => {
-                  setSaved(false);
-                  setEditing(false);
-                }}
-              >
-                Ok
-              </button>
+              <Icon icon={faArrowLeft} aria-hidden="true" />
+            </button>
+            <div>
+              <h1 className="m-0 text-2xl font-bold leading-tight md:text-3xl">
+                Kelola Profil
+              </h1>
+              <p className="mb-0 mt-1 text-xs text-[#4f6b60] md:text-sm">
+                Perbarui informasi akunmu
+              </p>
+            </div>
+          </header>
+          <div className="flex items-center gap-3 rounded-xl bg-[#f4f7ef] p-3.5 md:p-5">
+            <div className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-full border-[3px] border-[#13806a] bg-[#edf4e9] text-2xl text-[#13806a] md:size-20">
+              {user.avatar ? (
+                <img src={user.avatar} alt="" className="size-full object-cover" />
+              ) : (
+                <Icon icon={faUser} aria-hidden="true" />
+              )}
+            </div>
+            <div className="grid min-w-0 text-xs md:text-sm">
+              <b className="truncate text-sm md:text-base">{user.name}</b>
+              <span className="truncate text-[#4f6b60]">
+                {user.age}, {user.gender}
+              </span>
+              <span className="truncate text-[#4f6b60]">{user.email}</span>
+              <label className="mt-1.5 w-fit cursor-pointer rounded-md bg-[#aacbae] px-2 py-1 text-[11px] font-semibold text-[#173d35] transition-colors hover:bg-[#99bf9e] focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[#087460]">
+                Ganti Foto
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatar}
+                  className="sr-only"
+                />
+              </label>
             </div>
           </div>
+          <form
+            className="mt-3 rounded-xl bg-[#f4f7ef] p-3.5 md:mt-4 md:rounded-2xl md:p-5"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              try {
+                await persist?.(user);
+              } catch {
+                return;
+              }
+              setSaved(true);
+            }}
+          >
+            <div className="grid gap-3">
+              <Field
+                label="NAMA LENGKAP*"
+                autoComplete="name"
+                icon={faUser}
+                value={user.name}
+                onChange={(e) => setUser({ ...user, name: e.target.value })}
+              />
+              <Field
+                label="UMUR*"
+                inputMode="numeric"
+                icon={faCalendarDays}
+                value={user.age}
+                onChange={(e) => setUser({ ...user, age: e.target.value })}
+              />
+              <label className="block">
+                <span className="mb-1.5 ml-1 block text-[10px] font-bold uppercase tracking-wide text-[#365e53] md:text-xs">
+                  JENIS KELAMIN*
+                </span>
+                <select
+                  value={user.gender}
+                  onChange={(e) => setUser({ ...user, gender: e.target.value })}
+                  className="min-h-[46px] w-full rounded-xl border border-[#9fbeae] bg-[#f2f7ef] px-3.5 py-2.5 text-[15px] text-[#173d35] outline-none focus-visible:border-[#0f6b58] focus-visible:ring-2 focus-visible:ring-[#0f6b58]/35"
+                >
+                  <option>Perempuan</option>
+                  <option>Laki-laki</option>
+                </select>
+              </label>
+              <Field
+                label="EMAIL*"
+                type="email"
+                autoComplete="email"
+                icon={faEnvelope}
+                value={user.email}
+                onChange={(e) => setUser({ ...user, email: e.target.value })}
+              />
+              <Field
+                label="NOMOR TELEPON*"
+                type="tel"
+                autoComplete="tel"
+                icon={faPhone}
+                value={user.phone}
+                onChange={(e) => setUser({ ...user, phone: e.target.value })}
+              />
+              <label className="block">
+                <span className="mb-1.5 ml-1 block text-[10px] font-bold uppercase tracking-wide text-[#365e53] md:text-xs">
+                  TENTANG SAYA
+                </span>
+                <textarea
+                  value={user.about}
+                  onChange={(e) => setUser({ ...user, about: e.target.value })}
+                  className="min-h-[100px] w-full resize-y rounded-xl border border-[#9fbeae] bg-[#f2f7ef] px-3.5 py-2.5 text-[15px] text-[#173d35] outline-none focus-visible:border-[#0f6b58] focus-visible:ring-2 focus-visible:ring-[#0f6b58]/35"
+                />
+              </label>
+            </div>
+            <button
+              type="submit"
+              className="mt-4 flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-[#0f6b58] px-5 text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-[#0b5748] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#075746]"
+            >
+              <Icon icon={faCircleCheck} aria-hidden="true" /> Simpan Perubahan
+            </button>
+            <button
+              type="button"
+              onClick={logout}
+              className="mt-2.5 flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-[#ffd8df] px-5 text-sm font-bold uppercase tracking-wide text-[#a91a34] transition-colors hover:bg-[#fbc7d1] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a31a34]"
+            >
+              <Icon icon={faRightFromBracket} aria-hidden="true" /> Keluar Akun
+            </button>
+          </form>
+        </div>
+        {saved && (
+          <SuccessDialog
+            title="Berhasil"
+            message="Data berhasil diperbarui."
+            close={() => {
+              setSaved(false);
+              setEditing(false);
+            }}
+          />
         )}
       </section>
     );
   return (
-    <div className="min-h-[calc(100svh-74px)] bg-[#cde9d3] font-['Poppins'] text-[#174d3f] md:grid md:min-h-screen md:grid-cols-[minmax(400px,0.9fr)_minmax(500px,1.1fr)] md:gap-7 md:bg-[#eef5ec] md:p-8">
+    <div className="min-h-[calc(100svh-74px)] bg-[#cde9d3] font-['Poppins'] text-[#174d3f] xl:grid xl:min-h-screen xl:grid-cols-[minmax(400px,0.9fr)_minmax(500px,1.1fr)] xl:gap-7 xl:bg-[#eef5ec] xl:p-8">
       <section className="relative overflow-hidden rounded-b-[58px] bg-[#a9cbb0] px-9 pb-7 pt-4 md:rounded-[32px] md:px-12 md:py-10 md:shadow-[0_18px_45px_rgba(22,84,67,0.12)]">
         <img src="/assets/pic/pic-61.png" width="818" height="276" alt="" aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[86px] w-full object-cover md:h-[120px]" />
-        <button className="absolute right-4 top-4 z-10 grid size-12 cursor-pointer place-items-center rounded-full bg-[#087460] text-2xl text-white hover:bg-[#075746] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white" onClick={() => setEditing(true)} aria-label="Pengaturan profil">
+        <button className="absolute right-4 top-4 z-10 grid size-12 cursor-pointer place-items-center rounded-full bg-[#087460] text-2xl text-white hover:bg-[#075746] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white md:text-3xl" onClick={() => setEditing(true)} aria-label="Pengaturan profil">
           <Icon icon={faGear} />
         </button>
-        <div className="relative z-10 mx-auto mt-0 grid size-[76px] place-items-center rounded-full border-[5px] border-white bg-[#087460] text-[38px] text-white md:mt-5 md:size-28 md:text-[54px]">
-          <Icon icon={faUser} />
+        <div className="relative z-10 mx-auto mt-0 grid size-[76px] place-items-center overflow-hidden rounded-full border-[5px] border-white bg-[#087460] text-[38px] text-white md:mt-5 md:size-28 md:text-[54px]">
+          {user.avatar ? (
+            <img src={user.avatar} alt="" className="size-full object-cover" />
+          ) : (
+            <Icon icon={faUser} aria-hidden="true" />
+          )}
         </div>
         <h1 className="mb-0 mt-2 text-center text-[16px] font-semibold md:text-[25px]">{user.name}</h1>
         <p className="m-0 text-center text-[12px] font-semibold md:text-base">{user.age} · {user.gender}</p>
@@ -2672,7 +3560,7 @@ function Profile({ user, setUser, logout, go, persist }) {
         <div className="mx-auto mt-1 max-w-[440px] md:mt-3">
           <h2 className="mb-1 mt-0 text-[18px] font-semibold">Keluarga &amp; Teman</h2>
           {[1, 2, 3].map((item) => (
-            <button className="flex min-h-[38px] w-full cursor-pointer items-center gap-2 text-left text-[15px] font-medium hover:text-[#087460] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#087460] md:min-h-[42px]" key={item} onClick={() => go("contacts")}>
+            <button className="flex min-h-[38px] w-full cursor-pointer items-center gap-2 text-left text-[15px] font-medium hover:text-[#087460] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#087460] md:min-h-[44px] md:text-base" key={item} onClick={() => go("contacts")}>
               <span className="grid size-9 place-items-center rounded-full bg-[#2f7558] text-white"><Icon icon={faUser} /></span>
               Tambah Kontak Baru
             </button>
@@ -2681,7 +3569,7 @@ function Profile({ user, setUser, logout, go, persist }) {
         <Icon icon={faChevronRight} className="absolute bottom-1 left-1/2 rotate-90 text-2xl" aria-hidden="true" />
       </section>
       <section className="mx-3 my-3 overflow-hidden rounded-[54px] bg-[#7fac8b] px-0 pb-2 pt-4 md:m-0 md:rounded-[32px] md:px-4 md:py-6 md:shadow-[0_18px_45px_rgba(22,84,67,0.12)]">
-        <blockquote className="mx-4 mb-4 mt-0 text-center font-['Playfair_Display'] text-[14px] font-bold text-[#fff36e] md:text-xl">
+        <blockquote className="mx-4 mb-4 mt-0 text-center font-['Playfair_Display'] text-[14px] font-bold text-[#173d35] md:text-xl">
           “Jangan bandingkan dirimu dengan orang lain, jadilah versi terbaik
           dari dirimu sendiri!”
         </blockquote>
@@ -2710,18 +3598,28 @@ function Modal({ title, close, children }) {
   }, [close]);
   return (
     <div
-      className="modal-backdrop"
+      className="fixed inset-0 z-[130] flex items-end justify-center bg-[#102d26]/55 font-['Poppins'] md:items-center"
       onMouseDown={(e) => e.target === e.currentTarget && close()}
     >
       <section
-        className="modal"
+        className="max-h-[92dvh] w-full max-w-[500px] overflow-auto rounded-t-[26px] bg-[#fbfaf1] px-6 pb-8 pt-6 shadow-[0_-20px_50px_#09271d38] md:max-w-[620px] md:rounded-[26px]"
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
       >
-        <header>
-          <h2 id="modal-title">{title}</h2>
-          <button onClick={close} aria-label="Tutup dialog">
+        <header className="flex items-center justify-between gap-4">
+          <h2
+            id="modal-title"
+            className="m-0 font-['Playfair_Display'] text-2xl font-bold text-[#07513f]"
+          >
+            {title}
+          </h2>
+          <button
+            type="button"
+            onClick={close}
+            aria-label="Tutup dialog"
+            className="grid size-11 shrink-0 cursor-pointer place-items-center rounded-full bg-[#dce9df] text-[#0f6b58] transition-colors hover:bg-[#cfe1d6] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460]"
+          >
             <Icon icon={faXmark} />
           </button>
         </header>
@@ -2730,12 +3628,44 @@ function Modal({ title, close, children }) {
     </div>
   );
 }
+function SuccessDialog({ title, message, close }) {
+  useEffect(() => {
+    const fn = (e) => e.key === "Escape" && close();
+    document.addEventListener("keydown", fn);
+    return () => document.removeEventListener("keydown", fn);
+  }, [close]);
+  return (
+    <div className="fixed inset-0 z-[70] grid place-items-center bg-[#173d35]/45 px-5 font-['Poppins']">
+      <div
+        className="w-full max-w-[300px] rounded-lg bg-white px-5 py-5 text-center shadow-[4px_5px_0_#496258]"
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+      >
+        <Icon
+          icon={faCircleCheck}
+          aria-hidden="true"
+          className="mx-auto mb-2 block text-[42px] text-[#30c346]"
+        />
+        <b className="block text-lg text-[#173d35]">{title}</b>
+        <p className="my-2.5 text-sm text-[#5d6f66]">{message}</p>
+        <button
+          type="button"
+          onClick={close}
+          className="min-h-11 min-w-[88px] cursor-pointer rounded-full bg-[#b7dcf0] px-5 font-semibold text-[#173d35] transition-colors hover:bg-[#a5d1ea] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087460]"
+        >
+          Ok
+        </button>
+      </div>
+    </div>
+  );
+}
 function Empty({ title, text }) {
   return (
-    <div className="empty">
-      <Icon icon={faSeedling} />
-      <h2>{title}</h2>
-      <p>{text}</p>
+    <div className="mx-auto mt-8 max-w-[420px] px-6 py-10 text-center font-['Poppins'] text-[#174d3f]">
+      <Icon icon={faSeedling} aria-hidden="true" className="mx-auto mb-3 text-[42px] text-[#6f9d7c]" />
+      <h2 className="m-0 text-lg font-semibold">{title}</h2>
+      <p className="mb-0 mt-2 text-sm leading-6 text-[#4f6b60]">{text}</p>
     </div>
   );
 }

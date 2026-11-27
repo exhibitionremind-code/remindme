@@ -62,8 +62,12 @@ export async function loadWorkspace(userId) {
   if (!supabase || !userId) return null;
   const [profileResult, taskResult, contactResult] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
-    supabase.from("tasks").select("*").order("created_at"),
-    supabase.from("emergency_contacts").select("*").order("created_at"),
+    supabase.from("tasks").select("*").eq("user_id", userId).order("created_at"),
+    supabase
+      .from("emergency_contacts")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at"),
   ]);
   const error =
     profileResult.error || taskResult.error || contactResult.error || null;
@@ -85,6 +89,7 @@ export async function saveProfile(userId, profile) {
     gender: profile.gender,
     phone: profile.phone,
     about: profile.about,
+    avatar_url: profile.avatar || null,
     updated_at: new Date().toISOString(),
   });
   if (error) throw error;
